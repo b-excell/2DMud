@@ -1,0 +1,119 @@
+# FIERYWILDS: Game Vision Document
+
+## Core Concept
+FIERYWILDS is a top-down action RPG that draws inspiration from classic MUDs (Multi-User Dungeons) while incorporating modern real-time combat mechanics. Players explore a vast, interconnected world, starting as vulnerable adventurers in a safe town before venturing outward to face increasingly dangerous challenges, gather powerful equipment, and develop their unique character builds.
+
+## World Design
+
+### Structure
+- **Towns**: Safe hubs featuring essential services (shops, banks, temples, training grounds, quest givers)
+- **Connected Areas**: Small, discrete zones accessed via "exits" from larger areas
+- **Danger Zones**: Areas with progressively difficult enemies as players venture farther from civilization
+- **Landmarks**: Unique, memorable locations that help with navigation and world immersion
+
+### Generation Philosophy
+- **Hybrid Approach**: Blend of hand-crafted and procedurally generated content
+- **Consistent Core**: Major towns, quest hubs, and story locations remain consistent across playthroughs
+- **Dynamic Wilderness**: Forests, caves, and other wilderness areas use procedural generation for fresh experiences
+- **Persistence**: Some player impacts on the world remain between sessions (discovered shortcuts, defeated bosses)
+
+## Character Progression
+
+### Skill-Based Development
+- No predetermined classes at character creation
+- Character skills improve through use (combat skills, magic schools, crafting)
+- Stat distribution affects equipment options and ability effectiveness
+
+### Combat Styles
+- **Fighter**: Direct combat with various weapon types, defensive abilities
+- **Assassin**: Stealth, critical attacks, evasion, poisons
+- **Mage**: Various spell schools with different utility and damage patterns
+- **Druid**: Shapeshifting, companion creatures, nature-based abilities
+- **Hybrid Builds**: Encouraged through balanced stat requirements and complementary skills
+
+## Gameplay Systems
+
+### Combat
+- Real-time action with positioning and timing importance
+- Resource management (health, stamina, mana)
+- Various attack patterns and enemy behaviors requiring different tactics
+- Difficulty based on enemy AI rather than inflated stats
+
+### Enemy AI Variety
+- **Passive**: Creatures that flee when approached or attacked
+- **Neutral**: Entities that only become hostile when provoked
+- **Territorial**: Enemies that attack when players enter their domain
+- **Aggressive**: Monsters that actively hunt players within their area
+- **Special Behaviors**: Ambushes, pack tactics, environmental interactions
+
+### Death & Recovery
+- Upon death, player respawns at last visited town
+- Equipment remains on corpse, requiring recovery expedition
+- Limited inventory retained upon death (equipped items or essentials)
+- Possible gold/experience penalty to add consequence
+
+## Technical Implementation
+
+### Stage System Enhancement
+- Town stages with structured NPC placement and services
+- Special exit types (doors, gates, portals) with visual distinction
+- Consistent stage connections for major areas
+- Dynamic stage generation for wilderness and dungeons
+
+### Multiplayer Considerations
+- **Initial Phase**: Single-player with possible asynchronous elements
+  - Player ghosts or messages
+  - Shared leaderboards
+- **Stretch Goal**: Limited multiplayer
+  - Small party co-op (2-4 players)
+  - Shared world instances
+  - Simplified trading mechanics
+
+### Content Creation Pipeline
+- Tools for designing hand-crafted stages
+- Rules and parameters for procedural content generation
+- Testing methodology for difficulty progression
+
+## Artistic Direction
+
+### Visual Style
+- Minimalist but distinctive representation of characters and environments
+- Clear visual language for danger levels and interactive elements
+- Readable combat interactions even with multiple entities
+
+### Audio Design
+- Ambient sounds to enhance environment immersion
+- Distinctive audio cues for different enemy types and behaviors
+- Dynamic music system reflecting danger levels and player status
+
+## Development Priorities
+
+### Phase 1: Foundation
+- Core movement and stage transition mechanics ✓
+- Basic combat system
+- Initial town and surrounding area
+- Character stats and inventory
+
+### Phase 2: Expansion
+- Multiple towns and connecting areas
+- Enemy AI patterns
+- Skill progression system
+- Equipment variety
+
+### Phase 3: Depth
+- Quest system
+- Crafting and economy
+- Special encounters and boss fights
+- World persistence
+
+### Phase 4: Enrichment
+- Additional combat styles
+- Environmental hazards and interactions
+- Enhanced procedural generation
+- Prototype multiplayer features
+
+## Conclusion
+
+FIERYWILDS aims to capture the sense of exploration and danger from classic MUDs while providing the engaging real-time combat of modern action RPGs. By blending procedural generation with hand-crafted content, the game offers a vast world to explore with the excitement of discovery and the satisfaction of character progression through meaningful choices rather than predetermined paths.
+
+The primary design goal is to create an immersive world where player skill, knowledge, and decision-making determine success, rather than grinding or artificial restrictions. A world that feels alive, responsive, and worthy of exploration.

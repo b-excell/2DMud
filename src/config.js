@@ -4,6 +4,7 @@ const STAGE_WIDTH = 20;
 const STAGE_HEIGHT = 20;
 const PLAYER_RADIUS = 16;
 const PLAYER_SPEED = 200;
+const PLAYER_SPRINT_MULTIPLIER = 1.75;
 
 // Colors
 const COLOR_SOLID = 0x000000; // Black

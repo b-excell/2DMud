@@ -2,14 +2,20 @@
 <html>
 
 <head>
-    <title>Top-Down 2D Game Proof of Concept</title>
+    <title>FIERYWILDS: Top-Down 2D Game</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 </head>
 
 <body>
-    <!-- Scripts -->
+    <!-- Scripts in correct load order -->
     <script src="src/utils/helpers.js"></script>
+    <script src="src/core/EventBus.js"></script>
+    <script src="src/core/Entity.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/core/ActionManager.js"></script>
+    <script src="src/entities/EntityManager.js"></script>
+    <script src="src/input/InputManager.js"></script>
     <script src="src/scenes/GameScene.js"></script>
     <script src="src/entities/Player.js"></script>
     <script src="src/world/StageGenerator.js"></script>
