@@ -1,0 +1,92 @@
+# Top-Down Procedural Dungeon Explorer: Technical Overview
+
+## Project Architecture
+
+We've implemented a top-down 2D procedural dungeon crawler using Phaser 3 with a focus on dynamically generating and connecting multiple stages. The game uses Phaser's arcade physics system for movement and collisions, with a minimalist visual style using simple geometric shapes.
+
+## Core Components
+
+### Scene Management
+The game uses a single scene that gets modified and redrawn when transitioning between stages. Rather than creating separate scene objects for each stage, we're using a more memory-efficient approach where we clear and redraw the current scene's display objects when moving between stages.
+
+### Data Structure
+- **Stages**: Stored in a global `stages` object that maps stage IDs to stage data
+- **Stage representation**: Each stage contains:
+  - `id`: A unique identifier (e.g., "stage-1")
+  - `tiles`: A 2D array representing the tile types (1=solid, 0=empty, 2=exit)
+  - `exits`: Array of exit positions with x/y coordinates
+  - `exitConnections`: Maps from local exit indices to destination stage/exit pairs
+
+### Rendering System
+The game uses a tile-based approach with three primary tile types:
+- **Solid tiles**: Black rectangles that create walls and boundaries
+- **Empty tiles**: Light gray rectangles representing floor space
+- **Exit tiles**: Blue rectangles that act as portals between stages
+
+## Procedural Generation
+
+The level generation follows a fairly simple room-and-corridor approach:
+
+1. **Initialization**: Starts with a completely solid stage (all tiles = 1)
+2. **Central Room**: Creates an initial room at the center of the stage
+3. **Additional Rooms**: Generates 5-9 random rooms throughout the stage
+4. **Corridors**: Connects each room to the central room with horizontal and vertical passages
+5. **Boundary**: Enforces solid walls around the entire perimeter
+6. **Exit Placement**: Strategically places 1-2 exits, preferring locations near the edge
+
+The `generateEmptyAreas()` function handles the core of this algorithm, using a deterministic approach that ensures connected, navigable spaces.
+
+## Multi-Stage World System
+
+### Stage Storage
+All generated stages are stored persistently in the `stages` object, allowing players to revisit previously explored areas. This creates a consistent, expanding world rather than random one-off levels.
+
+### Exit Connections
+The exit system uses a bidirectional mapping approach:
+- When a player encounters a new exit, the system either:
+  - Uses an existing connection if one exists
+  - Generates a new stage and creates a bidirectional connection
+- Each connection stores both the destination stage ID and the specific exit index to appear at
+
+### Transition Logic
+When a player touches an exit:
+1. The current stage is saved
+2. The destination stage is loaded or generated
+3. The scene is cleared and redrawn with the new stage data
+4. The player is positioned near (but not on top of) the corresponding exit
+5. A brief transition cooldown prevents accidental double-transitions
+
+## Player Implementation
+
+The player is implemented as a circular physics body with:
+- Physics-based movement using velocity changes rather than position updates
+- Proper collision detection against wall tiles
+- Overlap detection for exit tiles
+- Camera following to keep the player centered
+- A high depth value (100) to ensure visibility above all other elements
+
+## Technical Considerations
+
+### Physics Groups
+We use Phaser's physics groups to efficiently manage collisions:
+- `walls`: A static physics group containing all solid tiles
+- `exits`: A static physics group containing all exit tiles
+
+### Performance Optimization
+- Only visible tiles are rendered as actual display objects
+- Physics bodies are only created for solid and exit tiles
+- Stages are generated once and reused for subsequent visits
+
+### Coordinate Systems
+The code maintains three coordinate systems:
+1. **Tile coordinates**: Used in the stage data (e.g., `stage.tiles[y][x]`)
+2. **Pixel coordinates**: Used for rendering and physics (e.g., `x * TILE_SIZE + TILE_SIZE / 2`)
+3. **Exit indices**: Used for tracking connections between exits
+
+## Extending the Project
+
+The architecture supports extension in several ways:
+- Additional tile types can be added by extending the tile type constants
+- More sophisticated procedural generation can replace the current algorithm
+
+The code intentionally separates the data model (stage structure) from the rendering and physics systems, making it easier to modify each part independently.
