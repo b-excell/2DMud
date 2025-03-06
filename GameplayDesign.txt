@@ -1,7 +1,7 @@
-# FIERYWILDS: Game Vision Document
+# Weathered: Game Vision Document
 
 ## Core Concept
-FIERYWILDS is a top-down action RPG that draws inspiration from classic MUDs (Multi-User Dungeons) while incorporating modern real-time combat mechanics. Players explore a vast, interconnected world, starting as vulnerable adventurers in a safe town before venturing outward to face increasingly dangerous challenges, gather powerful equipment, and develop their unique character builds.
+Weathered is a top-down action RPG that draws inspiration from classic MUDs (Multi-User Dungeons) while incorporating modern real-time combat mechanics. Players explore a vast, interconnected world, starting as vulnerable adventurers in a safe town before venturing outward to face increasingly dangerous challenges, gather powerful equipment, and develop their unique character builds.
 
 ## World Design
 
@@ -114,6 +114,6 @@ FIERYWILDS is a top-down action RPG that draws inspiration from classic MUDs (Mu
 
 ## Conclusion
 
-FIERYWILDS aims to capture the sense of exploration and danger from classic MUDs while providing the engaging real-time combat of modern action RPGs. By blending procedural generation with hand-crafted content, the game offers a vast world to explore with the excitement of discovery and the satisfaction of character progression through meaningful choices rather than predetermined paths.
+Weathered aims to capture the sense of exploration and danger from classic MUDs while providing the engaging real-time combat of modern action RPGs. By blending procedural generation with hand-crafted content, the game offers a vast world to explore with the excitement of discovery and the satisfaction of character progression through meaningful choices rather than predetermined paths.
 
 The primary design goal is to create an immersive world where player skill, knowledge, and decision-making determine success, rather than grinding or artificial restrictions. A world that feels alive, responsive, and worthy of exploration.
