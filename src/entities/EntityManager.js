@@ -1,8 +1,10 @@
+import { eventBus } from "../core/EventBus.js";
+
 /**
  * Manages all entities in the game
  * Provides a central place to update and track entities
  */
-class EntityManager {
+export class EntityManager {
     constructor(scene) {
         this.scene = scene;
         this.entities = {};

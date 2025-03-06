@@ -1,4 +1,8 @@
-class ExitManager {
+import { StageGenerator } from "./StageGenerator.js";
+import { STAGE_WIDTH, STAGE_HEIGHT, TILE_SIZE } from "../config.js";
+import { gameState } from "../core/GameState.js";
+
+export class ExitManager {
     constructor(scene) {
         this.scene = scene;
         this.canTransition = true;
@@ -9,17 +13,17 @@ class ExitManager {
 
         this.canTransition = false;
 
-        const stage = stages[currentStageId];
+        const stage = gameState.stages[gameState.currentStageId];
         const exitIndex = exitObj.exitIndex;
 
         // Check if this exit has a connection
         if (!stage.exitConnections[exitIndex]) {
             // Generate a new stage
-            const newStageId = 'stage-' + (Object.keys(stages).length + 1);
+            const newStageId = 'stage-' + (Object.keys(gameState.stages).length + 1);
             const newStage = StageGenerator.createStage(newStageId);
 
             // Store the stage
-            stages[newStageId] = newStage;
+            gameState.registerStage(newStage);
 
             // Set up the stage in the scene
             this.scene.stageManager.setupStage(newStageId);
@@ -49,7 +53,7 @@ class ExitManager {
             this.scene.stageManager.setupStage(connection.stageId);
 
             // Place player near the corresponding exit
-            const targetExit = stages[connection.stageId].exits[connection.exitIndex];
+            const targetExit = gameState.stages[connection.stageId].exits[connection.exitIndex];
             const tileX = targetExit.x * TILE_SIZE + TILE_SIZE / 2;
             const tileY = targetExit.y * TILE_SIZE + TILE_SIZE / 2;
 
@@ -65,7 +69,7 @@ class ExitManager {
 
                     // Check bounds and if it's an empty tile
                     if (nx >= 0 && nx < STAGE_WIDTH && ny >= 0 && ny < STAGE_HEIGHT &&
-                        stages[connection.stageId].tiles[ny][nx] === 0) {
+                        gameState.stages[connection.stageId].tiles[ny][nx] === 0) {
                         safeSpots.push({
                             x: nx * TILE_SIZE + TILE_SIZE / 2,
                             y: ny * TILE_SIZE + TILE_SIZE / 2

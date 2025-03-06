@@ -47,5 +47,5 @@ class EventBus {
     }
 }
 
-// Create a global instance
-const eventBus = new EventBus();
+// Create a global instance and export it
+export const eventBus = new EventBus();

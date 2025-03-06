@@ -1,8 +1,10 @@
+import { eventBus } from "./EventBus.js";
+
 /**
  * Base Entity class
  * All game objects that need network sync should extend this
  */
-class Entity {
+export class Entity {
     constructor(scene, type, x, y) {
         // Generate a unique ID (critical for network identification)
         this.id = `${type}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;

@@ -1,8 +1,18 @@
+import Phaser from 'phaser';
+import { EntityManager } from '../entities/EntityManager.js';
+import { StageManager } from '../world/Stage.js';
+import { ExitManager } from '../world/ExitManager.js';
+import { InputManager } from '../input/InputManager.js';
+import { gameState } from '../core/GameState.js';
+import { findEmptyTile } from '../utils/helpers.js';
+import { Player } from '../entities/Player.js';
+import { actionManager } from '../core/ActionManager.js';
+
 /**
  * Main game scene
  * Updated to use our new multiplayer-ready architecture
  */
-class GameScene extends Phaser.Scene {
+export class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
     }
@@ -21,7 +31,7 @@ class GameScene extends Phaser.Scene {
         this.accumulator = 0;
 
         // Generate initial stage
-        const initialStage = this.stageManager.setupStage(currentStageId);
+        const initialStage = this.stageManager.setupStage(gameState.currentStageId);
         gameState.registerStage(initialStage);
 
         // Create player

@@ -1,8 +1,12 @@
+import { actionManager } from "../core/ActionManager.js";
+import { PLAYER_SPEED } from "../config.js";
+import { eventBus } from "../core/EventBus.js";
+
 /**
  * Handles player input and converts to game actions
  * Separating input from game logic is crucial for multiplayer
  */
-class InputManager {
+export class InputManager {
     constructor(scene) {
         this.scene = scene;
         this.keys = null;

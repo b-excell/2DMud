@@ -1,8 +1,11 @@
+import { eventBus } from "./EventBus.js";
+import { gameState } from "./GameState.js";
+
 /**
  * Manages game actions in a way that can be networked
  * This pattern separates intent from execution, crucial for multiplayer
  */
-class ActionManager {
+export class ActionManager {
     constructor() {
         this.pendingActions = [];
         this.actionHandlers = {};
@@ -82,7 +85,7 @@ class ActionManager {
 }
 
 // Create a global instance
-const actionManager = new ActionManager();
+export const actionManager = new ActionManager();
 
 // Register some common action handlers
 actionManager.registerHandler('player:move', action => {

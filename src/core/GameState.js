@@ -1,3 +1,5 @@
+import { eventBus } from './EventBus.js';
+
 /**
  * Central game state manager
  * Acts as single source of truth for game state
@@ -90,5 +92,5 @@ class GameState {
     }
 }
 
-// Create a global instance
-const gameState = new GameState();
+// Create a global instance and export it
+export const gameState = new GameState();

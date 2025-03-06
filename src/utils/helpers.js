@@ -1,5 +1,8 @@
+import { STAGE_HEIGHT, STAGE_WIDTH, TILE_SIZE } from "../config.js";
+
+
 // Utility: Shuffle array
-function shuffleArray(array) {
+export function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
@@ -8,7 +11,7 @@ function shuffleArray(array) {
 }
 
 // Find a random empty tile in a stage
-function findEmptyTile(stage) {
+export function findEmptyTile(stage) {
     const emptyTiles = [];
 
     for (let y = 0; y < STAGE_HEIGHT; y++) {

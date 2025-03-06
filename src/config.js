@@ -1,19 +1,21 @@
+import Phaser from 'phaser';
+
 // Game Constants
-const TILE_SIZE = 64;
-const STAGE_WIDTH = 20;
-const STAGE_HEIGHT = 20;
-const PLAYER_RADIUS = 16;
-const PLAYER_SPEED = 200;
-const PLAYER_SPRINT_MULTIPLIER = 1.75;
+export const TILE_SIZE = 64;
+export const STAGE_WIDTH = 20;
+export const STAGE_HEIGHT = 20;
+export const PLAYER_RADIUS = 16;
+export const PLAYER_SPEED = 200;
+export const PLAYER_SPRINT_MULTIPLIER = 1.75;
 
 // Colors
-const COLOR_SOLID = 0x000000; // Black
-const COLOR_EMPTY = 0xDDDDDD; // Light gray
-const COLOR_EXIT = 0x0000FF;  // Blue
-const COLOR_PLAYER = 0xFF0000; // Red
+export const COLOR_SOLID = 0x000000; // Black
+export const COLOR_EMPTY = 0xDDDDDD; // Light gray
+export const COLOR_EXIT = 0x0000FF;  // Blue
+export const COLOR_PLAYER = 0xFF0000; // Red
 
 // Game configuration
-const config = {
+export const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
@@ -23,5 +25,5 @@ const config = {
             gravity: { y: 0 }
         }
     },
-    scene: [GameScene]
+    scene: [] // We'll add scenes dynamically
 };

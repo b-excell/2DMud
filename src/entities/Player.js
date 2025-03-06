@@ -1,8 +1,8 @@
-/**
- * Player entity
- * Updated to extend from the Entity base class
- */
-class Player extends Entity {
+import { Entity } from "../core/Entity.js";
+import { eventBus } from "../core/EventBus.js";
+import { PLAYER_RADIUS, COLOR_PLAYER } from "../config.js";
+
+export class Player extends Entity {
     constructor(scene, x, y) {
         super(scene, 'player', x, y);
 

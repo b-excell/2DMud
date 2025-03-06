@@ -1,4 +1,7 @@
-class StageGenerator {
+import { STAGE_WIDTH, STAGE_HEIGHT } from "../config.js";
+import { shuffleArray } from "../utils/helpers.js";
+
+export class StageGenerator {
     // Generate empty areas in a stage
     static generateEmptyAreas(stage) {
         // Start with a central room

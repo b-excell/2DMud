@@ -1,11 +1,13 @@
+import Phaser from 'phaser';
+import { config } from './config.js';
+import { GameScene } from './scenes/GameScene.js';
+
+// Add our scene to the config
+config.scene = [GameScene];
+
 // Create the game instance
-const game = new Phaser.Game(config);
+window.game = new Phaser.Game(config);
 
-// Global game state
-let stages = {};
-let currentStageId = 'stage-1';
-
-// Handle window resize
-window.addEventListener('resize', function () {
-    game.scale.resize(window.innerWidth, window.innerHeight);
-});
+// Global game state for legacy code compatibility
+window.stages = {};
+window.currentStageId = 'stage-1';

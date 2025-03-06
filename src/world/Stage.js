@@ -1,4 +1,9 @@
-class StageManager {
+import { gameState } from "../core/GameState.js";
+import { StageGenerator } from "./StageGenerator.js";
+import { eventBus } from "../core/EventBus.js";
+import { STAGE_WIDTH, STAGE_HEIGHT, TILE_SIZE, COLOR_SOLID, COLOR_EMPTY, COLOR_EXIT } from "../config.js";
+
+export class StageManager {
     constructor(scene) {
         this.scene = scene;
         this.walls = null;
@@ -15,15 +20,15 @@ class StageManager {
     // Generate a new stage or get an existing one
     getStage(stageId) {
         // Return existing stage if it exists
-        if (stages[stageId]) {
-            return stages[stageId];
+        if (gameState.stages[stageId]) {
+            return gameState.stages[stageId];
         }
 
         // Create a new stage
         const stage = StageGenerator.createStage(stageId);
 
         // Store the stage
-        stages[stageId] = stage;
+        gameState.registerStage(stage);
 
         return stage;
     }
@@ -68,8 +73,11 @@ class StageManager {
             }
         }
 
-        currentStageId = stageId;
+        
+        gameState.currentStageId = stageId;
+        eventBus.emit('stage:transition', { stageId });
         this.currentStage = stage;
+
         return stage;
     }
 }
