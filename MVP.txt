@@ -1,0 +1,145 @@
+# Weathered: Minimum Viable Product (MVP)
+
+## Overview
+
+The Weathered MVP aims to demonstrate the core gameplay experience with minimal feature set that showcases the game's unique aspects: interconnected stage-based exploration and real-time combat with varied enemy behaviors. This document outlines the scope of our initial release target, focusing on proving the core gameplay loop before expanding to the full feature set described in the Game Design Document.
+
+## Core Features
+
+### Stage-Based World Structure
+
+- **4 Connected Stages:**
+  - **Town Hub:** Small settlement with a shop, respawn point, and multiple exits
+  - **Wilderness Area:** Medium-sized outdoor area with scattered enemies
+  - **Exploration Zone:** Large area with more complex layout and hidden elements
+  - **Dungeon:** Small, challenge-focused area with higher enemy density
+
+- **Stage Connections:**
+  - Bidirectional exits between all areas
+  - At least one hidden shortcut (requires player discovery)
+  - Visual distinction between different area types
+
+- **Procedural Generation:**
+  - Basic room and corridor system for the larger areas
+  - Consistent exit placement for reliable navigation
+  - Deterministic generation to maintain stage layouts between sessions
+
+### Combat System
+
+- **Player Combat:**
+  - One melee weapon type with basic attack pattern
+  - Dodge/roll movement ability
+  - Health and stamina system
+
+- **Enemy Types:** (3 minimum)
+  - **Passive:** Flees when player approaches
+  - **Neutral:** Only attacks when provoked
+  - **Aggressive:** Actively hunts the player when in range
+
+- **Combat Mechanics:**
+  - Collision-based damage system
+  - Hit reactions and basic animations/effects
+  - Enemy AI based on simple behavior states
+
+- **Death Mechanics:**
+  - Player respawns at town hub
+  - Basic penalty (reduced health until visiting shop)
+  - Enemies reset when re-entering a stage
+
+### Minimal Progression
+
+- **Equipment:**
+  - 3-5 weapons with different stats
+  - Basic armor slot with 2-3 options
+  - Shop in town for purchasing upgrades
+
+- **Player Stats:**
+  - Health (increases with better equipment)
+  - Damage output
+  - Movement speed
+
+### Technical Requirements
+
+- **Stage Management:**
+  - Seamless transitions between stages
+  - State persistence when revisiting areas
+  - Memory-efficient handling of multiple stages
+
+- **Performance:**
+  - Stable framerate on target platforms
+  - Efficient entity management for areas with many enemies
+  - Optimized rendering for larger exploration zones
+
+- **Controls:**
+  - Responsive movement and combat
+  - Clear feedback for player actions
+  - Intuitive stage transition mechanics
+
+## Visual Presentation
+
+- **Minimalist Art Style:**
+  - Geometric shapes with clear color differentiation
+  - Visual distinction between stage types
+  - Clear indication of interactive elements (exits, NPCs, etc.)
+
+- **UI Elements:**
+  - Health/stamina indicators
+  - Current location identifier
+  - Basic inventory/equipment display
+  - Minimal HUD to maximize game view
+
+- **Feedback Systems:**
+  - Visual effects for hits, damage, and healing
+  - Screen transitions between stages
+  - Enemy state indicators (aggression, damage)
+
+## Out of Scope for MVP
+
+To maintain focus, the following features from the full design are explicitly excluded from the MVP:
+
+- Complex progression systems (skill trees, stat allocation)
+- Multiple weapon types and attack patterns
+- Campsite system
+- Companion mechanics
+- Quest system
+- Advanced crafting and economy
+- Environmental hazards and interactions
+- Teleportation network
+
+## Development Priorities
+
+1. **First Milestone: Movement & Stage Transitions**
+   - Player movement mechanics
+   - Stage generation
+   - Exit/entrance system
+   - Basic stage persistence
+
+2. **Second Milestone: Combat Basics**
+   - Player attack implementation
+   - Enemy AI behaviors
+   - Health system
+   - Death and respawn
+
+3. **Third Milestone: Progression & Content**
+   - Equipment implementation
+   - Shop system
+   - Balancing enemy placement
+   - Hidden area implementation
+
+4. **Final Milestone: Polish & Refinement**
+   - UI implementation
+   - Visual feedback enhancement
+   - Performance optimization
+   - Bug fixing and playtesting
+
+## Evaluation Criteria
+
+The MVP will be considered successful if it demonstrates:
+
+1. The appeal of exploring interconnected stages of varying sizes and layouts
+2. Engaging combat with distinct enemy behaviors
+3. Clear progression through equipment upgrades
+4. Technical stability with smooth transitions between areas
+5. Enough content to provide 15-30 minutes of gameplay
+
+This focused approach allows us to validate our core game concepts, gather feedback, and create a solid foundation for expanding toward the full vision of Weathered.

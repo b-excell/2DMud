@@ -1,92 +1,149 @@
-# Weathered
+# Weathered - Technical Overview
 
 ## Project Architecture
 
-We've implemented a top-down 2D procedural dungeon crawler using Phaser 3 with a focus on dynamically generating and connecting multiple stages. The game uses Phaser's arcade physics system for movement and collisions, with a minimalist visual style using simple geometric shapes.
+Weathered is a top-down 2D procedural dungeon crawler built with Phaser 3, featuring a robust architecture designed with multiplayer capabilities in mind. The game employs a stage-based system where discrete areas are connected through exits, combining procedural generation with hand-crafted elements to create an expansive world.
 
-## Core Components
+## Core System Design
 
-### Scene Management
-The game uses a single scene that gets modified and redrawn when transitioning between stages. Rather than creating separate scene objects for each stage, we're using a more memory-efficient approach where we clear and redraw the current scene's display objects when moving between stages.
+The architecture follows a modular, event-driven approach with clear separation of concerns to facilitate future multiplayer implementation:
 
-### Data Structure
-- **Stages**: Stored in a global `stages` object that maps stage IDs to stage data
-- **Stage representation**: Each stage contains:
-  - `id`: A unique identifier (e.g., "stage-1")
-  - `tiles`: A 2D array representing the tile types (1=solid, 0=empty, 2=exit)
-  - `exits`: Array of exit positions with x/y coordinates
-  - `exitConnections`: Maps from local exit indices to destination stage/exit pairs
+### Game State Management
 
-### Rendering System
-The game uses a tile-based approach with three primary tile types:
-- **Solid tiles**: Black rectangles that create walls and boundaries
-- **Empty tiles**: Light gray rectangles representing floor space
-- **Exit tiles**: Blue rectangles that act as portals between stages
+- **EventBus (`EventBus.js`)**: A central message broker that decouples game systems through a publish/subscribe pattern. All events include timestamps for potential network synchronization.
 
-## Procedural Generation
+- **GameState (`GameState.js`)**: Serves as the single source of truth for the game state, tracking entities, players, stages, and the current stage. Built to support state synchronization and reconciliation for multiplayer.
 
-The level generation follows a fairly simple room-and-corridor approach:
+- **ActionManager (`ActionManager.js`)**: Separates player intent from execution by queueing actions before processing them. This critical pattern enables:
+  - Deterministic updates for multiplayer synchronization
+  - Validation of actions before execution
+  - Replay capabilities for state reconciliation
 
-1. **Initialization**: Starts with a completely solid stage (all tiles = 1)
-2. **Central Room**: Creates an initial room at the center of the stage
-3. **Additional Rooms**: Generates 5-9 random rooms throughout the stage
-4. **Corridors**: Connects each room to the central room with horizontal and vertical passages
-5. **Boundary**: Enforces solid walls around the entire perimeter
-6. **Exit Placement**: Strategically places 1-2 exits, preferring locations near the edge
+### Entity System
 
-The `generateEmptyAreas()` function handles the core of this algorithm, using a deterministic approach that ensures connected, navigable spaces.
+- **Entity (`Entity.js`)**: Base class for all game objects that need network synchronization, providing:
+  - Unique ID generation
+  - Position tracking
+  - Network state serialization/deserialization
+  - Lifecycle management
 
-## Multi-Stage World System
+- **EntityManager (`EntityManager.js`)**: Centralizes entity registration, updates, and spatial queries with type-based indexing for efficient lookups.
 
-### Stage Storage
-All generated stages are stored persistently in the `stages` object, allowing players to revisit previously explored areas. This creates a consistent, expanding world rather than random one-off levels.
+- **Player (`Player.js`)**: Extends the Entity class with player-specific functionality, including:
+  - Movement controls
+  - Physics body integration
+  - Camera following
+  - Health tracking
+  - Network state specialization
 
-### Exit Connections
-The exit system uses a bidirectional mapping approach:
-- When a player encounters a new exit, the system either:
-  - Uses an existing connection if one exists
-  - Generates a new stage and creates a bidirectional connection
-- Each connection stores both the destination stage ID and the specific exit index to appear at
+### Input Handling
 
-### Transition Logic
-When a player touches an exit:
-1. The current stage is saved
-2. The destination stage is loaded or generated
-3. The scene is cleared and redrawn with the new stage data
-4. The player is positioned near (but not on top of) the corresponding exit
-5. A brief transition cooldown prevents accidental double-transitions
+- **InputManager (`InputManager.js`)**: Converts keyboard input into standardized game actions through the ActionManager, completely separating input capture from game logic execution.
 
-## Player Implementation
+## World Generation System
 
-The player is implemented as a circular physics body with:
-- Physics-based movement using velocity changes rather than position updates
-- Proper collision detection against wall tiles
-- Overlap detection for exit tiles
-- Camera following to keep the player centered
-- A high depth value (100) to ensure visibility above all other elements
+The world is composed of interconnected stages, each containing rooms, corridors, and exits:
+
+### Stage Management
+
+- **StageManager (`Stage.js`)**: Handles stage creation, transition, and rendering. It:
+  - Manages physics groups for walls and exits
+  - Creates the visual representation of stages
+  - Handles stage transitions
+
+- **StageGenerator (`StageGenerator.js`)**: Implements procedural generation through:
+  - Room placement with a central room and satellite rooms
+  - Corridor generation to ensure connectivity
+  - Strategic exit placement
+  - Border generation
+
+- **ExitManager (`ExitManager.js`)**: Manages connections between stages:
+  - Handles player transition between stages
+  - Creates bidirectional connections
+  - Ensures safe player placement after transition
+
+## Rendering and Physics
+
+- **GameScene (`GameScene.js`)**: The main Phaser scene that orchestrates:
+  - Entity creation and registration
+  - Physics setup (collisions and overlaps)
+  - Fixed timestep updates (critical for deterministic multiplayer)
+  - Input processing
+
+- **Physics Implementation**: Uses Phaser's Arcade Physics for:
+  - Collision detection between the player and walls
+  - Overlap detection for exits
+  - Movement with proper velocities
+
+## Technical Components
+
+### Tile-Based Approach
+
+The game uses a tile-based system with three primary tile types:
+- **Solid tiles (1)**: Black rectangles for walls and boundaries
+- **Empty tiles (0)**: Light gray rectangles for traversable floor space
+- **Exit tiles (2)**: Blue rectangles for stage transitions
+
+### Procedural Generation Algorithm
+
+The level generation follows a structured approach:
+1. Initialize with solid tiles
+2. Create a central room
+3. Generate 5-9 additional random rooms
+4. Connect all rooms to the central room with horizontal and vertical corridors
+5. Ensure solid boundaries around the perimeter
+6. Strategically place 1-2 exits near edges or walls
+
+### Fixed Timestep Loop
+
+The update loop implements a fixed timestep pattern for deterministic physics and game logic:
+- Variable framerate rendering with accumulator for smooth visuals
+- Fixed-rate updates for consistent game logic
+- Potential for interpolation between physics steps
+
+## Multiplayer Readiness
+
+Although currently implemented as single-player, the architecture has been designed with multiplayer in mind:
+
+### Network Synchronization Foundations
+
+- All entities have unique IDs and serializable state
+- Actions are queued and processed deterministically
+- Events include timestamps for network ordering
+- Entity positions are tracked separately from visual representation
+
+### Potential Client-Server Implementation
+
+The codebase supports a client-server model where:
+- Client captures input and sends actions
+- Server validates actions and updates authoritative state
+- State changes are broadcast to all clients
+- Clients reconcile their local state with server updates
+
+## Current Limitations and Future Work
+
+- **Combat System**: Foundations are in place, but combat mechanics are not yet implemented
+- **Enemy AI**: Structure for enemies exists, but no concrete implementations yet
+- **Character Stats**: Placeholder for health exists, but full RPG stat system not implemented
+- **Item and Inventory**: Not yet implemented
+- **Quest System**: Not yet implemented
+
+## Extension Points
+
+The architecture supports extension in several ways:
+- **Entity Types**: New entity classes can easily extend the base Entity class
+- **Action Types**: New actions can be registered with the ActionManager
+- **Tile Types**: Additional tile types can be added to the stage generation
+- **Stage Generation**: More sophisticated algorithms can replace the current implementation
 
 ## Technical Considerations
 
-### Physics Groups
-We use Phaser's physics groups to efficiently manage collisions:
-- `walls`: A static physics group containing all solid tiles
-- `exits`: A static physics group containing all exit tiles
+- **Memory Management**: Stages are generated once and cached for revisits
+- **Performance Optimization**: Only visible tiles have display objects
+- **Coordinate Systems**: The code maintains tile coordinates, pixel coordinates, and exit indices
 
-### Performance Optimization
-- Only visible tiles are rendered as actual display objects
-- Physics bodies are only created for solid and exit tiles
-- Stages are generated once and reused for subsequent visits
+## Development Environment
 
-### Coordinate Systems
-The code maintains three coordinate systems:
-1. **Tile coordinates**: Used in the stage data (e.g., `stage.tiles[y][x]`)
-2. **Pixel coordinates**: Used for rendering and physics (e.g., `x * TILE_SIZE + TILE_SIZE / 2`)
-3. **Exit indices**: Used for tracking connections between exits
-
-## Extending the Project
-
-The architecture supports extension in several ways:
-- Additional tile types can be added by extending the tile type constants
-- More sophisticated procedural generation can replace the current algorithm
-
-The code intentionally separates the data model (stage structure) from the rendering and physics systems, making it easier to modify each part independently.
+- **Engine**: Phaser 3 with Arcade Physics
+- **Rendering**: Canvas/WebGL (auto-detected by Phaser)
+- **Scaling**: Responsive design with window resize handling

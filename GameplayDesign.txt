@@ -1,94 +1,211 @@
-# Weathered: Game Vision Document
+# Weathered: Game Design Document
 
 ## Core Concept
-Weathered is a top-down action RPG that draws inspiration from classic MUDs (Multi-User Dungeons) while incorporating modern real-time combat mechanics. Players explore a vast, interconnected world, starting as vulnerable adventurers in a safe town before venturing outward to face increasingly dangerous challenges, gather powerful equipment, and develop their unique character builds.
 
-## World Design
+Weathered is a top-down action RPG that draws inspiration from classic MUDs (Multi-User Dungeons) while implementing modern real-time combat mechanics. Players explore a vast, interconnected world, starting as vulnerable adventurers in a safe town before venturing outward to face increasingly dangerous challenges, gather powerful equipment, and develop their unique character builds.
 
-### Structure
-- **Towns**: Safe hubs featuring essential services (shops, banks, temples, training grounds, quest givers)
-- **Connected Areas**: Small, discrete zones accessed via "exits" from larger areas
-- **Danger Zones**: Areas with progressively difficult enemies as players venture farther from civilization
-- **Landmarks**: Unique, memorable locations that help with navigation and world immersion
+## World Structure & Exploration
 
-### Generation Philosophy
+### Stage-Based World Design
+
+- **Interconnected Stages**: The world is divided into discrete stages of varying sizes connected by exits
+  - **Towns/Hubs**: Large, multi-screen areas containing essential services (shops, banks, inns, temples)
+  - **Interior Spaces**: Small, single-screen areas for shops, houses, and other buildings
+  - **Wilderness Areas**: Expansive, multi-screen areas containing dangers and connections to other regions
+  - **Dungeons**: Challenge-focused areas with unique enemies and valuable rewards
+
+- **Complex Web of Connections**: Areas connect in non-linear ways, encouraging exploration
+  - **Bidirectional Exits**: Most exits connect back to their origin point
+  - **Hidden Passages**: Secret areas accessed through special actions or items
+  - **Shortcuts**: Paths that can be unlocked from one side to facilitate faster travel
+  - **One-Way Exits**: Some paths only work in one direction, creating interesting traversal challenges
+
+### World Generation Philosophy
+
 - **Hybrid Approach**: Blend of hand-crafted and procedurally generated content
-- **Consistent Core**: Major towns, quest hubs, and story locations remain consistent across playthroughs
-- **Dynamic Wilderness**: Forests, caves, and other wilderness areas use procedural generation for fresh experiences
-- **Persistence**: Some player impacts on the world remain between sessions (discovered shortcuts, defeated bosses)
+  - **Consistent Core**: Major towns, quest hubs, and story locations remain fixed across playthroughs
+  - **Dynamic Wilderness**: Forests, caves, and other wilderness areas use procedural generation
+  - **Seeded Generation**: Important procedural areas maintain consistency for key game elements
+
+- **World Persistence**: Player impact on the world remains between sessions
+  - **Discovered Areas**: Remain mapped once found
+  - **Unlocked Shortcuts**: Stay accessible after activation
+  - **Defeated Bosses**: Remain defeated (unless purposefully reset)
+
+### Travel & Navigation Systems
+
+- **Teleportation Network**: Fast-travel system requiring prior discovery of locations
+- **Movement Abilities**: Skills, spells, or items that enhance traversal capabilities
+- **Mounts**: Creatures that increase movement speed and may provide special traversal abilities
+- **Maps & Wayfinding**: Tools to help navigate the complex world
+
+## Combat System
+
+### Real-Time Action Combat
+
+- **Combat Style**: Real-time action combat inspired by games like Hades, adapted for an open world
+- **Positioning**: Tactical movement and spacing important for both offense and defense
+- **Timing**: Attack patterns require proper timing for maximum effectiveness
+- **Resource Management**: Health, stamina, mana systems requiring strategic use
+
+### Combat Options
+
+- **Melee Combat**: Close-range weapons with various attack patterns and reach
+- **Ranged Combat**: Projectile weapons with considerations for ammunition and line-of-sight
+- **Magic**: Spells with varied effects, casting times, and resource costs
+- **Stealth**: Mechanics for avoiding detection and executing surprise attacks
+- **Environmental Interaction**: Using surroundings as tactical advantages
+
+### NPC Disposition System
+
+- **Friendly**: NPCs that aid the player in combat but may change disposition if attacked
+- **Controlled**: Companions that follow player commands and won't retaliate if accidentally hit
+- **Passive**: Creatures that flee when approached or attacked
+- **Neutral**: Entities that only become hostile when provoked
+- **Aggressive**: Monsters that actively hunt players within their territory
+- **Dynamic Disposition**: NPCs can change their attitude based on player actions
+
+### Enemy Variety
+
+- **Behavioral Patterns**: Enemies with unique attack patterns requiring different strategies
+- **Special Abilities**: Monsters with distinctive powers that create varied combat challenges
+- **Pack Tactics**: Some enemies coordinate attacks in groups
+- **Ambushers**: Creatures that hide and strike when players are vulnerable
+- **Elite Variants**: Stronger versions of standard enemies with enhanced abilities
+
+### Death & Recovery
+
+- **Death Penalty**: Upon death, player respawns at the last safe location
+- **Item Recovery**: Non-equipped items and currency are dropped at death location
+- **Recovery Expedition**: Players must return to their death site to reclaim lost items
+- **Time Pressure**: Potential decay or loss of dropped items if not recovered promptly
 
 ## Character Progression
 
-### Skill-Based Development
-- No predetermined classes at character creation
-- Character skills improve through use (combat skills, magic schools, crafting)
-- Stat distribution affects equipment options and ability effectiveness
+### Stat-Based Progression
 
-### Combat Styles
-- **Fighter**: Direct combat with various weapon types, defensive abilities
-- **Assassin**: Stealth, critical attacks, evasion, poisons
-- **Mage**: Various spell schools with different utility and damage patterns
-- **Druid**: Shapeshifting, companion creatures, nature-based abilities
-- **Hybrid Builds**: Encouraged through balanced stat requirements and complementary skills
+- **Level System**: Experience points gained from defeating enemies and completing quests
+- **Stat Points**: Allocated upon level-up to customize character capabilities
+- **Open Development**: No predetermined classes, allowing flexible character building
+- **Stat Requirements**: Equipment and abilities have minimum stat thresholds
 
-## Gameplay Systems
+### Ability Development
 
-### Combat
-- Real-time action with positioning and timing importance
-- Resource management (health, stamina, mana)
-- Various attack patterns and enemy behaviors requiring different tactics
-- Difficulty based on enemy AI rather than inflated stats
+- **Skill Improvement**: Abilities improve through use, encouraging playstyle diversity
+- **Specialization Rewards**: Benefits for focusing on certain play styles
+- **Hybrid Viability**: Build synergies that reward creative combinations
 
-### Enemy AI Variety
-- **Passive**: Creatures that flee when approached or attacked
-- **Neutral**: Entities that only become hostile when provoked
-- **Territorial**: Enemies that attack when players enter their domain
-- **Aggressive**: Monsters that actively hunt players within their area
-- **Special Behaviors**: Ambushes, pack tactics, environmental interactions
+### Build Archetypes
 
-### Death & Recovery
-- Upon death, player respawns at last visited town
-- Equipment remains on corpse, requiring recovery expedition
-- Limited inventory retained upon death (equipped items or essentials)
-- Possible gold/experience penalty to add consequence
+- **Warrior**: Melee-focused with high health and physical damage
+- **Assassin**: Stealth, critical strikes, and evasion
+- **Mage**: Varied spell schools with different utilities
+- **Ranger**: Ranged combat with support abilities
+- **Hybrid Builds**: Custom combinations of the above
 
-## Technical Implementation
+## Equipment & Items
 
-### Stage System Enhancement
-- Town stages with structured NPC placement and services
-- Special exit types (doors, gates, portals) with visual distinction
-- Consistent stage connections for major areas
-- Dynamic stage generation for wilderness and dungeons
+### Equipment System
 
-### Multiplayer Considerations
-- **Initial Phase**: Single-player with possible asynchronous elements
-  - Player ghosts or messages
-  - Shared leaderboards
-- **Stretch Goal**: Limited multiplayer
-  - Small party co-op (2-4 players)
-  - Shared world instances
-  - Simplified trading mechanics
+- **Slot-Based Equipment**: Items equipped in designated slots (weapon, armor, accessories)
+- **Stat Requirements**: Equipment requires minimum stat values to use effectively
+- **Durability**: Items may degrade with use and require repair
+- **Upgrade Paths**: Equipment can be enhanced through crafting/enchanting
 
-### Content Creation Pipeline
-- Tools for designing hand-crafted stages
-- Rules and parameters for procedural content generation
-- Testing methodology for difficulty progression
+### Item Acquisition
+
+- **Enemy Drops**: Both guaranteed and chance-based loot from defeated foes
+- **Treasure Chests**: Hidden rewards for thorough exploration
+- **Crafting**: Creating items from gathered materials
+- **Merchants**: Purchasing equipment using in-game currency
+- **Quest Rewards**: Unique items from completing specific tasks
+
+### Item Variety
+
+- **Weapons**: Melee, ranged, and magical with varied attack patterns
+- **Armor**: Protective gear with different defensive properties
+- **Consumables**: One-time use items for temporary benefits
+- **Crafting Materials**: Resources for creating and upgrading equipment
+- **Quest Items**: Special objects needed for story progression
+
+## Game Systems & Mechanics
+
+### Campsite System
+
+- **Temporary Rests**: Establish campsites in safe areas
+- **Stage Persistence**: Resting or leaving a stage typically resets enemies
+- **Campsite Upgrades**: Improve campsites to allow resting without resetting the stage
+- **Resource Management**: Camping may require consumable resources
+
+### Companion System
+
+- **Recruitment Methods**: Charm, tame, or reanimate creatures/NPCs as temporary allies
+- **Companion Behavior**: Followers assist in combat according to their abilities
+- **Duration & Limitations**: Temporary nature with potential for extension
+- **Specializations**: Different types of companions provide varied benefits
+
+### Quest System
+
+- **Main Storyline**: Central narrative driving the game's progression
+- **Side Quests**: Optional tasks providing rewards and world-building
+- **Recurring Missions**: Repeatable quests for farming resources
+- **Hidden Objectives**: Secret tasks discovered through exploration
+
+### Economy
+
+- **Currency**: Money earned through combat, quests, and selling items
+- **Merchants**: NPCs buying and selling various goods
+- **Banking**: Safe storage for currency to mitigate death penalties
+- **Price Fluctuations**: Potential regional or time-based price variations
 
 ## Artistic Direction
 
 ### Visual Style
-- Minimalist but distinctive representation of characters and environments
-- Clear visual language for danger levels and interactive elements
-- Readable combat interactions even with multiple entities
+
+- **Aesthetic**: Minimalist but distinctive representation of characters and environments
+- **Visual Language**: Clear visual cues for danger levels and interactive elements
+- **Environment Variety**: Visually distinct regions with unique themes
+- **Animation Quality**: Smooth character and effect animations prioritizing gameplay clarity
 
 ### Audio Design
-- Ambient sounds to enhance environment immersion
-- Distinctive audio cues for different enemy types and behaviors
-- Dynamic music system reflecting danger levels and player status
 
-## Development Priorities
+- **Ambient Soundscapes**: Environmental sounds enhancing immersion
+- **Combat Audio**: Distinctive sound cues for different attacks and abilities
+- **Music System**: Dynamic tracks reflecting danger levels and player status
+- **NPC Interactions**: Voice acting or sound effects for key character interactions
 
-### Phase 1: Foundation
+## Exploration Systems
+
+### Environment Interaction
+
+- **Destructible Elements**: Breakable objects that may contain items
+- **Movable Objects**: Puzzles involving pushing or manipulating objects
+- **Traversal Challenges**: Gaps, barriers, or obstacles requiring specific abilities
+- **Hidden Mechanisms**: Secret triggers revealing hidden areas
+
+### Discovery Incentives
+
+- **Mapping System**: Gradually filling out a world map through exploration
+- **Collection Mechanics**: Sets of items or achievements to discover
+- **Landmark Bonuses**: Rewards for finding notable locations
+- **Explorer Achievements**: Recognition for thorough world exploration
+
+## Future Ideas Backlog
+
+*This section contains mechanics and features we're considering but haven't fully committed to implementing.*
+
+- **Weather System**: Dynamic weather affecting gameplay mechanics
+- **Day/Night Cycle**: Time-based changes to the world and enemy behavior
+- **Reputation System**: Faction-based standing affecting NPC interactions
+- **Player Housing**: Customizable bases with functional benefits
+- **Fishing/Gathering**: Additional non-combat activities
+- **Pet System**: Permanent companions with growth and customization
+- **Multiplayer Features**: Co-op or limited multiplayer functionality
+- **Seasonal Events**: Time-limited content during real-world holidays
+
+## Development Roadmap
+
+### Phase 1: Foundation (Current)
 - Core movement and stage transition mechanics ✓
 - Basic combat system
 - Initial town and surrounding area
@@ -99,21 +216,17 @@ Weathered is a top-down action RPG that draws inspiration from classic MUDs (Mul
 - Enemy AI patterns
 - Skill progression system
 - Equipment variety
+- Campsite system
 
 ### Phase 3: Depth
 - Quest system
 - Crafting and economy
 - Special encounters and boss fights
 - World persistence
+- Companion system
 
 ### Phase 4: Enrichment
 - Additional combat styles
 - Environmental hazards and interactions
 - Enhanced procedural generation
-- Prototype multiplayer features
-
-## Conclusion
-
-Weathered aims to capture the sense of exploration and danger from classic MUDs while providing the engaging real-time combat of modern action RPGs. By blending procedural generation with hand-crafted content, the game offers a vast world to explore with the excitement of discovery and the satisfaction of character progression through meaningful choices rather than predetermined paths.
-
-The primary design goal is to create an immersive world where player skill, knowledge, and decision-making determine success, rather than grinding or artificial restrictions. A world that feels alive, responsive, and worthy of exploration.
+- Additional systems from the ideas backlog
