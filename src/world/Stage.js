@@ -39,6 +39,10 @@ export class StageManager {
         this.walls.clear(true, true);
         this.exits.clear(true, true);
 
+        // Remove all existing exit entities
+        const existingExits = this.scene.entityManager.getEntitiesWithComponent('exit');
+        existingExits.forEach(entity => entity.destroy());
+
         const stage = this.getStage(stageId);
 
         // Create a background
@@ -65,15 +69,25 @@ export class StageManager {
                     this.scene.add.rectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, COLOR_EMPTY);
                 }
                 else if (stage.tiles[y][x] === 2) { // Exit
+                    // Find the exit index
+                    const exitIndex = stage.exits.findIndex(e => e.x === x && e.y === y);
+
+                    // Create exit entity using factory
+                    this.scene.entityFactory.createFromPrefab('exit', {
+                        x: tileX,
+                        y: tileY,
+                        exitIndex: exitIndex
+                    });
+
+                    // Also create a physics object for the exit
                     const exitTile = this.scene.add.rectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, COLOR_EXIT);
                     this.scene.physics.add.existing(exitTile, true);
-                    exitTile.exitIndex = stage.exits.findIndex(e => e.x === x && e.y === y);
+                    exitTile.exitIndex = exitIndex;
                     this.exits.add(exitTile);
                 }
             }
         }
 
-        
         gameState.currentStageId = stageId;
         eventBus.emit('stage:transition', { stageId });
         this.currentStage = stage;

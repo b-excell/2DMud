@@ -1,12 +1,12 @@
 import './utils/helpers.js';
 import { eventBus } from './core/EventBus.js';
 import { Entity } from './core/Entity.js';
+import { Component } from './core/Component.js';
 import { gameState } from './core/GameState.js';
 import { actionManager } from './core/ActionManager.js';
+import './components/index.js';
 import './entities/EntityManager.js';
-import './input/InputManager.js';
 import './scenes/GameScene.js';
-import { Player } from './entities/Player.js';
 import { StageGenerator } from './world/StageGenerator.js';
 import { StageManager } from './world/Stage.js';
 import { ExitManager } from './world/ExitManager.js';

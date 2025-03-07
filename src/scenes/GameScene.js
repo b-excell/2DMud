@@ -2,15 +2,12 @@ import Phaser from 'phaser';
 import { EntityManager } from '../entities/EntityManager.js';
 import { StageManager } from '../world/Stage.js';
 import { ExitManager } from '../world/ExitManager.js';
-import { InputManager } from '../input/InputManager.js';
 import { gameState } from '../core/GameState.js';
 import { findEmptyTile } from '../utils/helpers.js';
-import { Player } from '../entities/Player.js';
 import { actionManager } from '../core/ActionManager.js';
 
 /**
- * Main game scene
- * Updated to use our new multiplayer-ready architecture
+ * Main game scene, updated for component-based entities
  */
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -23,7 +20,10 @@ export class GameScene extends Phaser.Scene {
         this.stageManager = new StageManager(this);
         this.stageManager.initialize();
         this.exitManager = new ExitManager(this);
-        this.inputManager = new InputManager(this);
+
+        // Create physics groups for exits and walls
+        this.walls = this.physics.add.staticGroup();
+        this.exits = this.physics.add.staticGroup();
 
         // Track time for fixed updates
         this.lastUpdateTime = Date.now();
@@ -34,29 +34,43 @@ export class GameScene extends Phaser.Scene {
         const initialStage = this.stageManager.setupStage(gameState.currentStageId);
         gameState.registerStage(initialStage);
 
-        // Create player
+        // Create player at a safe spot
         const safeSpot = findEmptyTile(initialStage);
-        this.player = new Player(this, safeSpot.x, safeSpot.y);
+        this.player = this.entityFactory.createFromPrefab('player', {
+            x: safeSpot.x,
+            y: safeSpot.y
+        });
 
         // Set up collisions
-        this.physics.add.collider(this.player.gameObject, this.stageManager.walls);
-        this.physics.add.overlap(
-            this.player.gameObject,
-            this.stageManager.exits,
-            (playerObj, exit) => this.exitManager.handleExit(playerObj, exit),
-            null,
-            this
-        );
+        this.setupCollisions();
+    }
 
-        // Register action handlers specific to this scene
-        actionManager.registerHandler('player:teleport', action => {
-            const { entityId, position } = action;
-            const entity = gameState.entities[entityId];
+    setupCollisions() {
+        // Get all entities with physics components
+        const playerEntity = this.player;
+        const playerRender = playerEntity.getComponent('render');
 
-            if (entity) {
-                entity.setPosition(position.x, position.y);
-            }
-        });
+        if (playerRender && playerRender.gameObject) {
+            // Setup collisions with walls
+            this.physics.add.collider(playerRender.gameObject, this.stageManager.walls);
+
+            // Setup overlaps with exits
+            this.physics.add.overlap(
+                playerRender.gameObject,
+                this.stageManager.exits,
+                (playerObj, exitObj) => {
+                    const exitEntity = exitObj.entity;
+                    if (exitEntity) {
+                        const exitComponent = exitEntity.getComponent('exit');
+                        if (exitComponent) {
+                            this.exitManager.handleExit(playerObj, exitComponent.exitIndex);
+                        }
+                    }
+                },
+                null,
+                this
+            );
+        }
     }
 
     /**
@@ -65,11 +79,7 @@ export class GameScene extends Phaser.Scene {
      * @param {number} delta - Time since last frame
      */
     update(time, delta) {
-        // Update input
-        this.inputManager.update();
-
         // Use fixed timestep for physics and game logic
-        // This is crucial for deterministic updates in multiplayer
         this.accumulator += delta;
 
         while (this.accumulator >= this.fixedTimeStep) {
@@ -84,7 +94,6 @@ export class GameScene extends Phaser.Scene {
 
     /**
      * Fixed update - runs at consistent intervals
-     * All game logic and physics go here for deterministic behavior
      * @param {number} deltaTime - Fixed time step in ms
      */
     fixedUpdate(deltaTime) {
@@ -100,7 +109,7 @@ export class GameScene extends Phaser.Scene {
      * @param {number} alpha - Interpolation factor (0-1)
      */
     renderUpdate(alpha) {
-        // In a more complex game, we would interpolate entity positions here
-        // based on their previous and current states
+        // In the future, we would implement interpolation here
+        // Currently, this is a placeholder for future enhancements
     }
 }

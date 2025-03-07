@@ -8,13 +8,12 @@ export class ExitManager {
         this.canTransition = true;
     }
 
-    handleExit(player, exitObj) {
+    handleExit(playerObj, exitIndex) {
         if (!this.canTransition) return;
 
         this.canTransition = false;
 
         const stage = gameState.stages[gameState.currentStageId];
-        const exitIndex = exitObj.exitIndex;
 
         // Check if this exit has a connection
         if (!stage.exitConnections[exitIndex]) {
@@ -78,18 +77,23 @@ export class ExitManager {
                 }
             }
 
+            // Get the player entity
+            const playerEntity = playerObj.entity;
+            const transform = playerEntity.getComponent('transform');
+
             // Place player at a safe spot or with an offset from the exit
             if (safeSpots.length > 0) {
                 const safeSpot = safeSpots[Math.floor(Math.random() * safeSpots.length)];
-                player.x = safeSpot.x;
-                player.y = safeSpot.y;
+                transform.setPosition(safeSpot.x, safeSpot.y);
             } else {
                 // Fallback: Place with offset
                 const offsetX = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
                 const offsetY = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
-                player.x = tileX + offsetX;
-                player.y = tileY + offsetY;
+                transform.setPosition(tileX + offsetX, tileY + offsetY);
             }
+
+            // Update collisions after stage change
+            this.scene.setupCollisions();
         }
 
         // Allow transitions again after a short delay

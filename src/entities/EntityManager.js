@@ -1,18 +1,43 @@
 import { eventBus } from "../core/EventBus.js";
+import { EntityFactory } from "./EntityFactory.js";
+import * as Prefabs from "./prefabs/index.js";
 
 /**
  * Manages all entities in the game
- * Provides a central place to update and track entities
  */
 export class EntityManager {
     constructor(scene) {
         this.scene = scene;
         this.entities = {};
-        this.entityTypes = {};
+        this.entityTypes = new Map();
+
+        // Create an entity factory
+        this.factory = new EntityFactory(scene);
+
+        // Register prefabs with the factory
+        this.registerDefaultPrefabs();
+
+        // Make factory available on the scene
+        scene.entityFactory = this.factory;
 
         // Listen for entity events
         eventBus.on('entity:created', this.registerEntity.bind(this));
         eventBus.on('entity:destroyed', this.unregisterEntity.bind(this));
+    }
+
+    /**
+     * Register default prefabs
+     */
+    registerDefaultPrefabs() {
+        for (const [name, prefab] of Object.entries(Prefabs)) {
+            // Convert from camelCase to kebab-case
+            const prefabName = name
+                .replace(/^create/, '')
+                .replace(/([a-z])([A-Z])/g, '$1-$2')
+                .toLowerCase();
+
+            this.factory.registerPrefab(prefabName, prefab);
+        }
     }
 
     /**
@@ -22,12 +47,6 @@ export class EntityManager {
     registerEntity(data) {
         const { entity } = data;
         this.entities[entity.id] = entity;
-
-        // Group by type for efficient querying
-        if (!this.entityTypes[entity.type]) {
-            this.entityTypes[entity.type] = {};
-        }
-        this.entityTypes[entity.type][entity.id] = entity;
     }
 
     /**
@@ -38,13 +57,6 @@ export class EntityManager {
         const { entityId } = data;
 
         if (this.entities[entityId]) {
-            const entity = this.entities[entityId];
-
-            // Remove from type groups
-            if (this.entityTypes[entity.type] && this.entityTypes[entity.type][entityId]) {
-                delete this.entityTypes[entity.type][entityId];
-            }
-
             delete this.entities[entityId];
         }
     }
@@ -55,19 +67,8 @@ export class EntityManager {
      */
     update(deltaTime) {
         Object.values(this.entities).forEach(entity => {
-            if (entity.update) {
-                entity.update(deltaTime);
-            }
+            entity.update(deltaTime);
         });
-    }
-
-    /**
-     * Get entities by type
-     * @param {string} type - Entity type
-     * @returns {object} Map of entities of the specified type
-     */
-    getEntitiesByType(type) {
-        return this.entityTypes[type] || {};
     }
 
     /**
@@ -77,6 +78,17 @@ export class EntityManager {
      */
     getEntityById(id) {
         return this.entities[id];
+    }
+
+    /**
+     * Get all entities with a specific component
+     * @param {string} componentType - Component type
+     * @returns {Array} Entities with the component
+     */
+    getEntitiesWithComponent(componentType) {
+        return Object.values(this.entities).filter(entity =>
+            entity.hasComponent(componentType)
+        );
     }
 
     /**
@@ -90,8 +102,11 @@ export class EntityManager {
         const radiusSquared = radius * radius;
 
         return Object.values(this.entities).filter(entity => {
-            const dx = entity.position.x - x;
-            const dy = entity.position.y - y;
+            const transform = entity.getComponent('transform');
+            if (!transform) return false;
+
+            const dx = transform.position.x - x;
+            const dy = transform.position.y - y;
             return (dx * dx + dy * dy) <= radiusSquared;
         });
     }

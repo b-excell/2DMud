@@ -115,3 +115,28 @@ actionManager.registerHandler('stage:transition', action => {
 
     // In multiplayer, this would be a critical sync point
 });
+
+actionManager.registerHandler('entity:move', action => {
+    const { entityId, direction, speed } = action;
+    const entity = gameState.entities[entityId];
+
+    if (entity) {
+        const physics = entity.getComponent('physics');
+        if (physics) {
+            physics.setVelocity(
+                direction.x * speed,
+                direction.y * speed
+            );
+        }
+    }
+});
+
+actionManager.registerHandler('entity:attack', action => {
+    const { entityId } = action;
+    const entity = gameState.entities[entityId];
+
+    if (entity) {
+        // Will implement attack behavior later
+        console.log(`Entity ${entityId} is attacking!`);
+    }
+});

@@ -1,46 +1,73 @@
 import { eventBus } from "./EventBus.js";
 
 /**
- * Base Entity class
- * All game objects that need network sync should extend this
+ * Entity class
+ * A container for components
  */
 export class Entity {
-    constructor(scene, type, x, y) {
+    constructor(scene, id) {
         // Generate a unique ID (critical for network identification)
-        this.id = `${type}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-        this.type = type;
+        this.id = id || `entity_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
         this.scene = scene;
-        this.gameObject = null; // Phaser game object reference
-        this.position = { x, y };
-        this.lastUpdateTime = Date.now();
-
-        // Network synchronization flags (for future use)
-        this.needsSync = true;
-        this.isLocallyControlled = true; // Will be false for network entities
+        this.components = new Map();
 
         // Register with game state
         eventBus.emit('entity:created', { entity: this });
     }
 
     /**
-     * Update entity state
-     * @param {number} deltaTime - Time since last update in ms
+     * Add a component to this entity
+     * @param {Component} component - The component to add
+     * @returns {Entity} - Returns this for chaining
      */
-    update(deltaTime) {
-        this.lastUpdateTime = Date.now();
-
-        // If this entity has moved/changed, mark for sync
-        this.needsSync = true;
+    addComponent(component) {
+        component.entity = this;
+        this.components.set(component.type, component);
+        component.onAttach();
+        return this;
     }
 
     /**
-     * Apply a network state update
-     * Would be used to sync remote entities in multiplayer
-     * @param {object} state - State data from network
+     * Get a component by type
+     * @param {string} type - Component type
+     * @returns {Component|undefined} - The component or undefined
      */
-    applyNetworkState(state) {
-        // Will be implemented for multiplayer
-        // Updates position, rotation, animation state, etc.
+    getComponent(type) {
+        return this.components.get(type);
+    }
+
+    /**
+     * Check if entity has a component
+     * @param {string} type - Component type
+     * @returns {boolean} - True if entity has component
+     */
+    hasComponent(type) {
+        return this.components.has(type);
+    }
+
+    /**
+     * Remove a component
+     * @param {string} type - Component type
+     */
+    removeComponent(type) {
+        const component = this.components.get(type);
+        if (component) {
+            component.onDetach();
+            this.components.delete(type);
+        }
+        return this;
+    }
+
+    /**
+     * Update all components
+     * @param {number} deltaTime - Time since last update in ms
+     */
+    update(deltaTime) {
+        for (const component of this.components.values()) {
+            if (component.update) {
+                component.update(deltaTime);
+            }
+        }
     }
 
     /**
@@ -48,38 +75,46 @@ export class Entity {
      * @returns {object} Network-ready state object
      */
     getNetworkState() {
-        return {
+        const state = {
             id: this.id,
-            type: this.type,
-            position: this.position,
-            timestamp: Date.now()
+            components: {}
         };
+
+        // Collect serializable data from components
+        for (const [type, component] of this.components.entries()) {
+            if (component.getNetworkState) {
+                state.components[type] = component.getNetworkState();
+            }
+        }
+
+        return state;
     }
 
     /**
-     * Destroy this entity
+     * Apply a network state update
+     * @param {object} state - Network state to apply
+     */
+    applyNetworkState(state) {
+        if (state.components) {
+            for (const [type, componentState] of Object.entries(state.components)) {
+                const component = this.getComponent(type);
+                if (component && component.applyNetworkState) {
+                    component.applyNetworkState(componentState);
+                }
+            }
+        }
+    }
+
+    /**
+     * Destroy this entity and all its components
      */
     destroy() {
-        if (this.gameObject) {
-            this.gameObject.destroy();
+        // Clean up all components
+        for (const component of this.components.values()) {
+            component.onDetach();
         }
 
+        this.components.clear();
         eventBus.emit('entity:destroyed', { entityId: this.id });
-    }
-
-    /**
-     * Set the position of this entity
-     * @param {number} x - X coordinate
-     * @param {number} y - Y coordinate
-     */
-    setPosition(x, y) {
-        this.position.x = x;
-        this.position.y = y;
-
-        if (this.gameObject) {
-            this.gameObject.setPosition(x, y);
-        }
-
-        this.needsSync = true;
     }
 }
