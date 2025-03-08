@@ -11,7 +11,7 @@ export const PLAYER_SPRINT_MULTIPLIER = 1.75;
 // Colors
 export const COLOR_SOLID = 0x000000; // Black
 export const COLOR_EMPTY = 0xDDDDDD; // Light gray
-export const COLOR_EXIT = 0x0000FF;  // Blue
+export const COLOR_EXIT = 0x00FF00;  // Blue
 export const COLOR_PLAYER = 0xFF0000; // Red
 
 // Game configuration

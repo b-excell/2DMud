@@ -1,6 +1,6 @@
-import { InputComponent } from "./InputComponent.js";
-import { actionManager } from "../../core/ActionManager.js";
-import { PLAYER_SPEED, PLAYER_SPRINT_MULTIPLIER } from "../../config.js";
+import { InputComponent } from './InputComponent.js';
+import { actionManager } from '../core/ActionManager.js';
+import { PLAYER_SPEED, PLAYER_SPRINT_MULTIPLIER } from '../config.js';
 
 export class KeyboardInputComponent extends InputComponent {
     constructor() {
@@ -14,9 +14,14 @@ export class KeyboardInputComponent extends InputComponent {
             sprint: false,
             attack: false
         };
+
+        // Require physics capability to actually move the entity
+        this.requireComponent('physics');
     }
 
     onAttach() {
+        if (!super.onAttach()) return false;
+
         // Set up keyboard inputs
         this.keys = this.entity.scene.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -26,6 +31,8 @@ export class KeyboardInputComponent extends InputComponent {
             sprint: Phaser.Input.Keyboard.KeyCodes.SHIFT,
             attack: Phaser.Input.Keyboard.KeyCodes.SPACE
         });
+
+        return true;
     }
 
     update() {
@@ -75,7 +82,15 @@ export class KeyboardInputComponent extends InputComponent {
             const sprintMultiplier = this.inputState.sprint ? PLAYER_SPRINT_MULTIPLIER : 1;
             const speed = PLAYER_SPEED * sprintMultiplier;
 
-            // Queue movement action
+            // Apply movement directly if we're handling a single-player game
+            const physics = this.entity.getComponent('physics');
+            if (physics) {
+                physics.setVelocity(direction.x * speed, direction.y * speed);
+            } else {
+                console.warn('No physics component found for input to control');
+            }
+
+            // We can still queue the action for future multiplayer compatibility
             actionManager.queueAction({
                 type: 'entity:move',
                 entityId: this.entity.id,
@@ -85,6 +100,11 @@ export class KeyboardInputComponent extends InputComponent {
             });
         } else {
             // No movement keys pressed, stop movement
+            const physics = this.entity.getComponent('physics');
+            if (physics) {
+                physics.setVelocity(0, 0);
+            }
+
             actionManager.queueAction({
                 type: 'entity:move',
                 entityId: this.entity.id,

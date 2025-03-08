@@ -89,7 +89,7 @@ export class StageManager {
                     const renderComponent = exitEntity.getComponent('render');
                     if (renderComponent && renderComponent.gameObject) {
                         // Store the exitIndex on the gameObject for collision detection
-                        renderComponent.gameObject.exitIndex = exitIndex;
+                        //renderComponent.gameObject.exitIndex = exitIndex;
 
                         // Add to the exits group for collision detection
                         this.exits.add(renderComponent.gameObject);
@@ -103,12 +103,7 @@ export class StageManager {
         this.currentStage = stage;
 
         // Make sure camera is following the correct player
-        if (playerEntity) {
-            const renderComponent = playerEntity.getComponent('render');
-            if (renderComponent && renderComponent.gameObject) {
-                this.scene.cameras.main.startFollow(renderComponent.gameObject);
-            }
-        }
+
 
         return stage;
     }

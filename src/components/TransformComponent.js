@@ -1,4 +1,4 @@
-import { Component } from "../../core/Component.js";
+import { Component } from "./Component.js";
 
 export class TransformComponent extends Component {
     constructor(x = 0, y = 0) {

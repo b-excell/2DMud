@@ -1,7 +1,7 @@
 import './utils/helpers.js';
 import { eventBus } from './core/EventBus.js';
-import { Entity } from './core/Entity.js';
-import { Component } from './core/Component.js';
+import { Entity } from './entities/Entity.js';
+import { Component } from './components/Component.js';
 import { gameState } from './core/GameState.js';
 import { actionManager } from './core/ActionManager.js';
 import './components/index.js';

@@ -1,4 +1,4 @@
-import { Component } from "../../core/Component.js";
+import { Component } from './Component.js'
 
 /**
  * Base class for all input components

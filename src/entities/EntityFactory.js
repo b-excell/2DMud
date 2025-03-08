@@ -1,5 +1,6 @@
-import { Entity } from '../core/Entity.js';
-import { eventBus } from '../core/EventBus.js';
+import { Entity } from './Entity.js';
+import { createExit } from './prefabs/exit.js';
+import { createPlayer } from './prefabs/player.js';
 
 /**
  * Factory for creating game entities
@@ -8,6 +9,21 @@ export class EntityFactory {
     constructor(scene) {
         this.scene = scene;
         this.prefabs = {};
+
+        // Register the built-in prefabs
+        this.registerDefaultPrefabs();
+    }
+
+    /**
+     * Register default prefabs
+     */
+    registerDefaultPrefabs() {
+        // Register each prefab manually with the correct name
+        this.registerPrefab('exit', createExit);
+        this.registerPrefab('player', createPlayer);
+
+        // Log prefabs for debugging
+        console.log("Registered prefabs:", Object.keys(this.prefabs));
     }
 
     /**
@@ -28,6 +44,7 @@ export class EntityFactory {
     createFromPrefab(prefabName, config = {}) {
         if (!this.prefabs[prefabName]) {
             console.error(`Prefab "${prefabName}" not found`);
+            console.error("Available prefabs:", Object.keys(this.prefabs));
             return null;
         }
 
