@@ -88,24 +88,6 @@ export class ActionManager {
 export const actionManager = new ActionManager();
 
 // Register some common action handlers
-actionManager.registerHandler('player:move', action => {
-    const { entityId, direction, speed } = action;
-    const entity = gameState.entities[entityId];
-
-    if (entity && entity.gameObject) {
-        // Always set the velocity based on the direction vector
-        // Direction vector is already normalized in InputManager
-        entity.gameObject.body.setVelocity(
-            direction.x * speed,
-            direction.y * speed
-        );
-
-        // Update entity's internal movement tracking
-        if (entity.move) {
-            entity.move(direction, speed);
-        }
-    }
-});
 
 actionManager.registerHandler('stage:transition', action => {
     const { stageId, entityId, position } = action;
