@@ -80,16 +80,30 @@ export class ExitManager {
             // Get the player entity
             const playerEntity = playerObj.entity;
             const transform = playerEntity.getComponent('transform');
+            const physics = playerEntity.getComponent('physics');
 
-            // Place player at a safe spot or with an offset from the exit
+            // Define safe position
+            let safeX, safeY;
+
             if (safeSpots.length > 0) {
                 const safeSpot = safeSpots[Math.floor(Math.random() * safeSpots.length)];
-                transform.setPosition(safeSpot.x, safeSpot.y);
+                safeX = safeSpot.x;
+                safeY = safeSpot.y;
             } else {
                 // Fallback: Place with offset
                 const offsetX = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
                 const offsetY = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
-                transform.setPosition(tileX + offsetX, tileY + offsetY);
+                safeX = tileX + offsetX;
+                safeY = tileY + offsetY;
+            }
+
+            // Update the transform position
+            transform.setPosition(safeX, safeY);
+
+            // Also update the physics body directly
+            const render = playerEntity.getComponent('render');
+            if (render && render.gameObject && render.gameObject.body) {
+                render.gameObject.body.reset(safeX, safeY);
             }
 
             // Update collisions after stage change

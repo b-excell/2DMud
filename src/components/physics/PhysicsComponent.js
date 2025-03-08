@@ -25,7 +25,7 @@ export class PhysicsComponent extends Component {
         // Set circle body if applicable
         if (this.radius) {
             render.gameObject.body.setCircle(this.radius);
-            render.gameObject.body.offset.set(this.radius, this.radius);
+            
 
         }
 
@@ -48,10 +48,10 @@ export class PhysicsComponent extends Component {
         const render = this.entity.getComponent('render');
 
         if (transform && render && render.gameObject && render.gameObject.body) {
-            // Update transform position from physics body
+            // Update transform position from physics body CENTER, not corner
             transform.setPosition(
-                render.gameObject.body.x,
-                render.gameObject.body.y
+                render.gameObject.body.x + render.gameObject.body.width / 2,
+                render.gameObject.body.y + render.gameObject.body.height / 2
             );
         }
     }

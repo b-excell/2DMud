@@ -39,9 +39,15 @@ export class StageManager {
         this.walls.clear(true, true);
         this.exits.clear(true, true);
 
-        // Remove all existing exit entities
-        const existingExits = this.scene.entityManager.getEntitiesWithComponent('exit');
-        existingExits.forEach(entity => entity.destroy());
+        // IMPORTANT: Keep track of the player entity
+        const playerEntity = this.scene.player;
+
+        // Get all entities EXCEPT the player
+        const entitiesToRemove = Object.values(this.scene.entityManager.entities)
+            .filter(entity => entity !== playerEntity);
+
+        // Destroy all non-player entities
+        entitiesToRemove.forEach(entity => entity.destroy());
 
         const stage = this.getStage(stageId);
 
@@ -72,18 +78,22 @@ export class StageManager {
                     // Find the exit index
                     const exitIndex = stage.exits.findIndex(e => e.x === x && e.y === y);
 
-                    // Create exit entity using factory
-                    this.scene.entityFactory.createFromPrefab('exit', {
+                    // Create ONLY ONE exit representation
+                    const exitEntity = this.scene.entityFactory.createFromPrefab('exit', {
                         x: tileX,
                         y: tileY,
                         exitIndex: exitIndex
                     });
 
-                    // Also create a physics object for the exit
-                    const exitTile = this.scene.add.rectangle(tileX, tileY, TILE_SIZE, TILE_SIZE, COLOR_EXIT);
-                    this.scene.physics.add.existing(exitTile, true);
-                    exitTile.exitIndex = exitIndex;
-                    this.exits.add(exitTile);
+                    // Get the render component and its gameObject
+                    const renderComponent = exitEntity.getComponent('render');
+                    if (renderComponent && renderComponent.gameObject) {
+                        // Store the exitIndex on the gameObject for collision detection
+                        renderComponent.gameObject.exitIndex = exitIndex;
+
+                        // Add to the exits group for collision detection
+                        this.exits.add(renderComponent.gameObject);
+                    }
                 }
             }
         }
@@ -91,6 +101,14 @@ export class StageManager {
         gameState.currentStageId = stageId;
         eventBus.emit('stage:transition', { stageId });
         this.currentStage = stage;
+
+        // Make sure camera is following the correct player
+        if (playerEntity) {
+            const renderComponent = playerEntity.getComponent('render');
+            if (renderComponent && renderComponent.gameObject) {
+                this.scene.cameras.main.startFollow(renderComponent.gameObject);
+            }
+        }
 
         return stage;
     }
