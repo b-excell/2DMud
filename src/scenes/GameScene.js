@@ -43,6 +43,8 @@ export class GameScene extends Phaser.Scene {
 
         // Set up collisions
         this.setupCollisions();
+        this.physics.world.createDebugGraphic();
+
     }
 
     setupCollisions() {

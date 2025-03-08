@@ -1,5 +1,6 @@
 import { TransformComponent } from '../../components/core/TransformComponent.js';
 import { CircleRenderComponent } from '../../components/render/CircleRenderComponent.js';
+import { RectangleRenderComponent } from '../../components/render/RectangleRenderComponent.js';
 import { PhysicsComponent } from '../../components/physics/PhysicsComponent.js';
 import { KeyboardInputComponent } from '../../components/input/KeyboardInputComponent.js';
 import { PLAYER_RADIUS, COLOR_PLAYER } from '../../config.js';

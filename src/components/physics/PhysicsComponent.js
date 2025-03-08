@@ -25,6 +25,8 @@ export class PhysicsComponent extends Component {
         // Set circle body if applicable
         if (this.radius) {
             render.gameObject.body.setCircle(this.radius);
+            render.gameObject.body.offset.set(this.radius, this.radius);
+
         }
 
         // Set immovable for static bodies
