@@ -2,6 +2,7 @@ import { PhaserObjectComponent } from "./PhaserObjectComponent.js";
 
 /**
  * Component that creates and manages a rectangular Phaser game object
+ * VISUAL REPRESENTATION ONLY - does not handle physics or collision
  */
 export class RectangleComponent extends PhaserObjectComponent {
     /**
@@ -26,6 +27,8 @@ export class RectangleComponent extends PhaserObjectComponent {
     createGameObject() {
         const transform = this.getRequiredComponent('transform');
 
+        // Create a rectangle centered at the transform position
+        // IMPORTANT: The position is the CENTER of the rectangle
         const rectangle = this.entity.scene.add.rectangle(
             transform.position.x,
             transform.position.y,
@@ -34,6 +37,9 @@ export class RectangleComponent extends PhaserObjectComponent {
             this.color,
             this.alpha
         );
+
+        // Tag this game object as visual-only
+        rectangle.isVisualOnly = true;
 
         return rectangle;
     }

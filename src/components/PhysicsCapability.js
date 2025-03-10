@@ -4,7 +4,14 @@ import { CircleComponent } from './CircleComponent.js';
 import { RectangleComponent } from './RectangleComponent.js';
 
 /**
- * Adds physics capabilities to an entity with a PhaserObjectComponent
+ * Adds physics capabilities to an entity
+ * 
+ * IMPORTANT: This component is solely responsible for:
+ * 1. Physics calculations
+ * 2. Collision detection and response
+ * 3. Movement via physics forces/velocity
+ * 
+ * It must coordinate with visual components but maintain separation of concerns
  */
 export class PhysicsCapability extends Component {
     /**
@@ -18,6 +25,9 @@ export class PhysicsCapability extends Component {
         this.bodyType = bodyType;
         this.immovable = bodyType === 'static';
         this.velocity = { x: 0, y: 0 };
+        
+        // Track whether we've created a physics body
+        this.hasPhysicsBody = false;
 
         // Store collision configuration
         this.options = {
@@ -28,9 +38,9 @@ export class PhysicsCapability extends Component {
             ...options
         };
 
-        // Define dependencies - but we don't directly require 'phaserObject' anymore
+        // Define dependencies
         this.requireComponent('transform');
-        // We'll check for visual components in the onAttach method instead
+        // We'll check for visual components in the onAttach method
     }
 
     /**
@@ -57,6 +67,13 @@ export class PhysicsCapability extends Component {
             return false;
         }
 
+        // Remove any existing physics body to prevent duplication
+        if (visualComponent.gameObject.body) {
+            console.warn(`Game object for entity ${this.entity.id} already has a physics body. Removing it before adding a new one.`);
+            this.entity.scene.physics.world.remove(visualComponent.gameObject.body);
+            visualComponent.gameObject.body = null;
+        }
+
         // Add physics to the existing game object
         this.entity.scene.physics.add.existing(
             visualComponent.gameObject,
@@ -69,6 +86,8 @@ export class PhysicsCapability extends Component {
             return false;
         }
 
+        this.hasPhysicsBody = true;
+
         // Configure the body shape based on the type of object component
         this.configureCollisionShape(visualComponent);
 
@@ -76,7 +95,20 @@ export class PhysicsCapability extends Component {
         body.immovable = this.immovable;
         body.bounce = this.options.bounce;
         body.friction = this.options.friction;
-        body.drag = this.options.drag, this.options.drag;
+        body.drag = this.options.drag;
+
+        // Explicitly set the initial position to match the transform component
+        const transform = this.entity.getComponent('transform');
+        this.syncPositionFromTransform(transform);
+
+        // Enable debug logging for physics issues
+        console.log(`Physics body created for entity ${this.entity.id} of type ${this.entity.type}`, {
+            x: body.x,
+            y: body.y,
+            width: body.width,
+            height: body.height,
+            isCircle: !!body.isCircle
+        });
 
         return true;
     }
@@ -99,21 +131,56 @@ export class PhysicsCapability extends Component {
 
     /**
      * Configure the collision shape based on the PhaserObjectComponent type
+     * CRITICAL: This ensures proper alignment between visual and physics representations
      * @param {PhaserObjectComponent} visualComponent - The visual component
      */
     configureCollisionShape(visualComponent) {
         const gameObject = visualComponent.gameObject;
         if (!gameObject || !gameObject.body) return;
 
+        // Get the transform for position reference
+        const transform = this.entity.getComponent('transform');
+        if (!transform) return;
+
         if (visualComponent instanceof CircleComponent) {
+            const radius = visualComponent.radius;
+            
             // For circles, use a circle collider with the component's radius
-            gameObject.body.setCircle(visualComponent.radius);
+            gameObject.body.setCircle(radius);
+            
+            // CRITICAL: Position the physics body correctly relative to the visual
+            // No offset needed for circles because both visual and physics use center
+            
+            console.log(`Configured circle physics body for entity ${this.entity.id} with radius ${radius}`);
         }
         else if (visualComponent instanceof RectangleComponent) {
+            const width = visualComponent.width;
+            const height = visualComponent.height;
+            
             // For rectangles, use a rectangular collider matching the visual size
-            gameObject.body.setSize(visualComponent.width, visualComponent.height);
+            gameObject.body.setSize(width, height);
+            
+            // CRITICAL: Offset for rectangles to align physics with visual
+            // Phaser physics bodies are positioned at top-left by default, but our visuals use center
+            gameObject.body.setOffset(-width/2, -height/2);
+            
+            console.log(`Configured rectangle physics body for entity ${this.entity.id} with width ${width} and height ${height}`);
         }
-        // We could add more shape types here in the future
+    }
+
+    /**
+     * Sync the physics body position from the transform component
+     * @param {TransformComponent} transform - The transform component
+     */
+    syncPositionFromTransform(transform) {
+        const visualComponent = this.findVisualComponent();
+        if (!visualComponent || !visualComponent.gameObject || !visualComponent.gameObject.body) return;
+        
+        const body = visualComponent.gameObject.body;
+        
+        // Reset the body position to the transform position
+        // This ensures the physics body is correctly positioned at the entity's center
+        body.reset(transform.position.x, transform.position.y);
     }
 
     /**
@@ -136,31 +203,68 @@ export class PhysicsCapability extends Component {
 
     /**
      * Update physics state
-     * In this updated architecture, the physics body updates the transform
-     * rather than the other way around
+     * Physics is the authority for position when an entity is moving
      * @param {number} deltaTime - Time in ms since last update
      */
     update(deltaTime) {
         // Only needed for dynamic bodies
-        if (this.bodyType !== 'dynamic') return;
+        if (this.bodyType !== 'dynamic' || !this.hasPhysicsBody) return;
 
         const transform = this.entity.getComponent('transform');
         const visualComponent = this.findVisualComponent();
 
-        if (transform && visualComponent && visualComponent.gameObject && visualComponent.gameObject.body) {
-            const body = visualComponent.gameObject.body;
+        if (!transform || !visualComponent || !visualComponent.gameObject || !visualComponent.gameObject.body) {
+            return;
+        }
 
-            // Update transform from physics body (critical for accurate physics)
-            if (body.center) {
-                // Use the body center for accurate positioning
-                transform.setPosition(body.center.x, body.center.y);
+        const body = visualComponent.gameObject.body;
+
+        // Only update the transform from physics if we're actually moving
+        // This prevents jittering when standing still
+        if (Math.abs(body.velocity.x) > 0.001 || Math.abs(body.velocity.y) > 0.001 || 
+            body.position.x !== body.prev.x || body.position.y !== body.prev.y) {
+            
+            // Get the physics body's center position
+            let physicsX, physicsY;
+            
+            if (body.isCircle) {
+                physicsX = body.x + body.radius;
+                physicsY = body.y + body.radius;
             } else {
-                // Fallback if center isn't available
-                transform.setPosition(
-                    body.x + body.width / 2,
-                    body.y + body.height / 2
-                );
+                physicsX = body.x + body.width/2;
+                physicsY = body.y + body.height/2;
             }
+            
+            // Set transform position directly (avoiding triggering unnecessary updates)
+            transform.position.x = physicsX;
+            transform.position.y = physicsY;
+            
+            // Tell the visual component not to override this position
+            visualComponent._skipNextPositionUpdate = true;
+        }
+    }
+
+    /**
+     * Clean up physics when component is detached
+     */
+    onDetach() {
+        // Find the visual component and clean up its physics body
+        const visualComponent = this.findVisualComponent();
+        if (visualComponent && visualComponent.gameObject && visualComponent.gameObject.body) {
+            // Explicitly disable the physics body before destroying
+            visualComponent.gameObject.body.enable = false;
+            
+            // If this is Arcade Physics, we can do more cleanup
+            if (this.entity.scene.physics.world.remove) {
+                // Remove body from the physics world to prevent lingering collisions
+                this.entity.scene.physics.world.remove(visualComponent.gameObject.body);
+            }
+            
+            // Remove the body reference from the game object
+            visualComponent.gameObject.body = null;
+            
+            this.hasPhysicsBody = false;
+            console.log(`Physics body removed for entity ${this.entity.id} of type ${this.entity.type}`);
         }
     }
 

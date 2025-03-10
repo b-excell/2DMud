@@ -2,6 +2,7 @@ import { PhaserObjectComponent } from "./PhaserObjectComponent";
 
 /**
  * Component that creates and manages a circular Phaser game object
+ * VISUAL REPRESENTATION ONLY - does not handle physics or collision
  */
 export class CircleComponent extends PhaserObjectComponent {
     /**
@@ -24,6 +25,8 @@ export class CircleComponent extends PhaserObjectComponent {
     createGameObject() {
         const transform = this.getRequiredComponent('transform');
 
+        // Create a circle centered at the transform position
+        // IMPORTANT: The position is the CENTER of the circle
         const circle = this.entity.scene.add.circle(
             transform.position.x,
             transform.position.y,
@@ -31,6 +34,9 @@ export class CircleComponent extends PhaserObjectComponent {
             this.color,
             this.alpha
         );
+
+        // Tag this game object as visual-only
+        circle.isVisualOnly = true;
 
         return circle;
     }

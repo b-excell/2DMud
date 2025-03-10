@@ -110,4 +110,15 @@ export class EntityManager {
             return (dx * dx + dy * dy) <= radiusSquared;
         });
     }
+
+    /**
+     * Get all entities of a specific type
+     * @param {string} type - Entity type
+     * @returns {Array} Entities of the specified type
+     */
+    getEntitiesByType(type) {
+        return Object.values(this.entities).filter(entity => 
+            entity.type === type
+        );
+    }
 }

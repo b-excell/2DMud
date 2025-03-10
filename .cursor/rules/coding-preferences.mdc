@@ -1,0 +1,18 @@
+---
+description: General Preferences For coding
+globs: *.js, *.html
+alwaysApply: false
+---
+
+# Coding pattern preferences
+
+- Always prefer simple solutions.
+- Stick with established patterns if at all possible.
+- Keep performance in mind.
+- Keep multplayer functionality in mind.
+- Try to write the solution first before restorting to an external library.
+- Work with the game engine instead of coding around it.
+- Use the Entity/Component pattern expertly.
+- Do not allow files to become more than 200-300 lines. Refactor when necessary to keep files small and concerns seperate in a logical way.
+- Mention unused or depricated code whenever you encounter it, suggest edits to keep the code clean.
+- Keep our file structure clean, logical, and tidy. Reorganize when necessary.

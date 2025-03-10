@@ -48,30 +48,55 @@ export class GameScene extends Phaser.Scene {
     }
 
     setupCollisions() {
-        // Get all entities with physics components
+        console.log("Setting up collisions for all entities");
+        
+        // Get the player entity
         const playerEntity = this.player;
-        const playerRender = playerEntity.getComponent('render');
-
-        if (playerRender && playerRender.gameObject) {
+        
+        // Get the player's physics component via its visual component
+        const playerVisual = playerEntity.getComponent('circle');
+        
+        if (playerVisual && playerVisual.gameObject && playerVisual.gameObject.body) {
+            console.log("Setting up player collisions");
+            
             // Setup collisions with walls
-            this.physics.add.collider(playerRender.gameObject, this.stageManager.walls);
-
-            // Setup overlaps with exits
-            this.physics.add.overlap(
-                playerRender.gameObject,
-                this.stageManager.exits,
-                (playerObj, exitObj) => {
-                    const exitEntity = exitObj.entity;
-                    if (exitEntity) {
-                        const exitComponent = exitEntity.getComponent('exit');
-                        if (exitComponent) {
-                            this.exitManager.handleExit(playerObj, exitComponent.exitIndex);
-                        }
-                    }
-                },
+            this.physics.add.collider(
+                playerVisual.gameObject, 
+                this.stageManager.walls,
+                null, // No callback needed for basic wall collisions
                 null,
                 this
             );
+
+            // Get all exit entities and set up overlaps with each
+            const exitEntities = this.entityManager.getEntitiesByType('exit');
+            console.log(`Found ${exitEntities.length} exit entities for collision setup`);
+            
+            for (const exitEntity of exitEntities) {
+                const exitVisual = exitEntity.getComponent('rectangle');
+                
+                if (exitVisual && exitVisual.gameObject && exitVisual.gameObject.body) {
+                    // Setup overlap detection between player and this exit
+                    this.physics.add.overlap(
+                        playerVisual.gameObject,
+                        exitVisual.gameObject,
+                        () => {
+                            const exitComponent = exitEntity.getComponent('exit');
+                            if (exitComponent) {
+                                this.exitManager.handleExit(playerEntity, exitComponent.exitIndex);
+                            }
+                        },
+                        null, // No custom process callback needed
+                        this
+                    );
+                    
+                    console.log(`Set up overlap detection between player and exit ${exitEntity.id}`);
+                } else {
+                    console.warn(`Exit entity ${exitEntity.id} is missing visual component or physics body`);
+                }
+            }
+        } else {
+            console.error("Player entity missing visual component or physics body - cannot set up collisions");
         }
     }
 

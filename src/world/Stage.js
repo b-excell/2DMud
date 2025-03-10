@@ -85,14 +85,11 @@ export class StageManager {
                         exitIndex: exitIndex
                     });
 
-                    // Get the render component and its gameObject
-                    const renderComponent = exitEntity.getComponent('render');
-                    if (renderComponent && renderComponent.gameObject) {
-                        // Store the exitIndex on the gameObject for collision detection
-                        //renderComponent.gameObject.exitIndex = exitIndex;
-
+                    // Get the rectangle component and its gameObject
+                    const rectangleComponent = exitEntity.getComponent('rectangle');
+                    if (rectangleComponent && rectangleComponent.gameObject) {
                         // Add to the exits group for collision detection
-                        this.exits.add(renderComponent.gameObject);
+                        this.exits.add(rectangleComponent.gameObject);
                     }
                 }
             }

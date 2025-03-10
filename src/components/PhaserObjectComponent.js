@@ -3,6 +3,10 @@ import { Component } from './Component.js';
 /**
  * Base class for components that own a Phaser game object
  * Each entity should have at most one PhaserObjectComponent
+ * 
+ * IMPORTANT: This component is for VISUAL REPRESENTATION ONLY
+ * It should not handle physics or collision detection
+ * Position coordinates refer to the CENTER of the visual representation
  */
 export class PhaserObjectComponent extends Component {
     /**
@@ -14,6 +18,7 @@ export class PhaserObjectComponent extends Component {
         this.gameObject = null;
         this.depth = 0;
         this.visible = true;
+        this._skipNextPositionUpdate = false; // Used for coordination with physics
 
         // All PhaserObjectComponents depend on transform data
         this.requireComponent('transform');
@@ -48,7 +53,7 @@ export class PhaserObjectComponent extends Component {
             // Store a reference to the entity on the game object for easy access
             this.gameObject.entity = this.entity;
 
-            // Apply initial state
+            // Set initial properties
             this.setVisible(this.visible);
             this.setDepth(this.depth);
 
@@ -60,17 +65,24 @@ export class PhaserObjectComponent extends Component {
     }
 
     /**
-     * When detached from an entity, destroy the game object
+     * Clean up the game object when the component is detached
      */
     onDetach() {
         if (this.gameObject) {
+            // Ensure we only destroy the visual component, not any physics attachments
+            // This is important: we're only responsible for the visual representation
+            if (this.gameObject.body) {
+                console.warn(`Game object for entity ${this.entity.id} still has a physics body when visual component is being detached. This suggests incorrect component lifecycle management.`);
+                // We'll let the physics component handle its own cleanup
+            }
+            
             this.gameObject.destroy();
             this.gameObject = null;
         }
     }
 
     /**
-     * Update position and other properties from transform component
+     * Update the visual game object from transform data
      * @param {number} deltaTime - Time in ms since last update
      */
     update(deltaTime) {
@@ -84,13 +96,21 @@ export class PhaserObjectComponent extends Component {
 
     /**
      * Update the game object from transform data
-     * May be overridden by subclasses for specific behaviors
+     * VISUAL POSITION ONLY - does not affect physics
      * @param {TransformComponent} transform - The transform component
      */
     updateFromTransform(transform) {
         if (!this.gameObject) return;
 
-        this.gameObject.setPosition(transform.position.x, transform.position.y);
+        // Skip position update if physics has just handled positioning
+        if (this._skipNextPositionUpdate) {
+            this._skipNextPositionUpdate = false;
+        } else {
+            // Position is relative to the CENTER of the visual object
+            this.gameObject.setPosition(transform.position.x, transform.position.y);
+        }
+
+        // Always update rotation and scale
         this.gameObject.setRotation(transform.rotation);
 
         // Scale might not be supported by all game objects
@@ -106,28 +126,28 @@ export class PhaserObjectComponent extends Component {
      */
     setVisible(visible) {
         this.visible = visible;
-        if (this.gameObject) {
+        if (this.gameObject && typeof this.gameObject.setVisible === 'function') {
             this.gameObject.setVisible(visible);
         }
         return this;
     }
 
     /**
-     * Set the depth (render order) of the game object
-     * @param {number} depth - The render depth
+     * Set the render depth of the game object
+     * @param {number} depth - Render depth
      * @returns {PhaserObjectComponent} - Returns this for chaining
      */
     setDepth(depth) {
         this.depth = depth;
-        if (this.gameObject) {
+        if (this.gameObject && typeof this.gameObject.setDepth === 'function') {
             this.gameObject.setDepth(depth);
         }
         return this;
     }
 
     /**
-     * Get all information needed for network synchronization
-     * @returns {object} Object containing serializable state
+     * Get network serializable state
+     * @returns {object} Serializable state
      */
     getNetworkState() {
         return {
@@ -137,14 +157,13 @@ export class PhaserObjectComponent extends Component {
     }
 
     /**
-     * Apply network state updates
-     * @param {object} state - Received state to apply
+     * Apply network state update
+     * @param {object} state - State to apply
      */
     applyNetworkState(state) {
         if (state.visible !== undefined) {
             this.setVisible(state.visible);
         }
-
         if (state.depth !== undefined) {
             this.setDepth(state.depth);
         }

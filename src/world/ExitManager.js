@@ -1,6 +1,10 @@
 import { StageGenerator } from "./StageGenerator.js";
-import { STAGE_WIDTH, STAGE_HEIGHT, TILE_SIZE } from "../config.js";
+import { STAGE_WIDTH, STAGE_HEIGHT, TILE_SIZE, PLAYER_RADIUS, COLOR_PLAYER } from "../config.js";
 import { gameState } from "../core/GameState.js";
+import { CircleComponent } from "../components/CircleComponent.js";
+import { PhysicsCapability } from "../components/PhysicsCapability.js";
+import { KeyboardInputComponent } from "../components/KeyboardInputComponent.js";
+import { TransformComponent } from "../components/TransformComponent.js";
 
 export class ExitManager {
     constructor(scene) {
@@ -8,7 +12,7 @@ export class ExitManager {
         this.canTransition = true;
     }
 
-    handleExit(playerObj, exitIndex) {
+    handleExit(playerEntity, exitIndex) {
         if (!this.canTransition) return;
 
         this.canTransition = false;
@@ -77,8 +81,7 @@ export class ExitManager {
                 }
             }
 
-            // Get the player entity
-            const playerEntity = playerObj.entity;
+            // Get the player components
             const transform = playerEntity.getComponent('transform');
             const physics = playerEntity.getComponent('physics');
 
@@ -100,10 +103,54 @@ export class ExitManager {
             // Update the transform position
             transform.setPosition(safeX, safeY);
 
-            // Also update the physics body directly
-            const render = playerEntity.getComponent('render');
-            if (render && render.gameObject && render.gameObject.body) {
-                render.gameObject.body.reset(safeX, safeY);
+            // Check if the player's visual component has a valid gameObject
+            const visualComponent = playerEntity.getComponent('circle');
+            if (!visualComponent || !visualComponent.gameObject) {
+                console.log("Recreating player components after stage transition");
+                
+                // Completely rebuild the player entity
+                // First, remove ALL components to ensure clean state
+                const componentsToRemove = [...playerEntity.components.keys()];
+                
+                // Only keep the transform component's position data
+                const transform = playerEntity.getComponent('transform');
+                const position = transform ? { x: transform.position.x, y: transform.position.y } : { x: safeX, y: safeY };
+                
+                // Remove all components in reverse order to handle dependencies properly
+                for (const componentType of componentsToRemove.reverse()) {
+                    playerEntity.removeComponent(componentType);
+                }
+                
+                // Add components back in the correct order
+                // 1. Transform first (with saved position)
+                const newTransform = new TransformComponent(
+                    position.x, position.y
+                );
+                playerEntity.addComponent(newTransform);
+                
+                // 2. Circle visual component
+                playerEntity.addComponent(new CircleComponent(
+                    PLAYER_RADIUS,
+                    COLOR_PLAYER
+                ));
+                
+                // 3. Physics component
+                playerEntity.addComponent(new PhysicsCapability(
+                    'dynamic',
+                    { drag: 0 }
+                ));
+                
+                // 4. Input component
+                playerEntity.addComponent(new KeyboardInputComponent());
+                
+                // Get the newly created visual component for camera following
+                const newVisualComponent = playerEntity.getComponent('circle');
+                if (newVisualComponent && newVisualComponent.gameObject) {
+                    this.scene.cameras.main.startFollow(newVisualComponent.gameObject);
+                }
+            } else if (visualComponent.gameObject && visualComponent.gameObject.body) {
+                // If visual and physics are still intact, just reset the position
+                visualComponent.gameObject.body.reset(safeX, safeY);
             }
 
             // Update collisions after stage change

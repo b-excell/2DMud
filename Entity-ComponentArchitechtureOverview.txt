@@ -1,0 +1,184 @@
+# ENTITY-COMPONENT ARCHITECTURE OVERVIEW
+
+## Core Architecture
+
+The game is built on an Entity-Component architecture with these fundamental elements:
+
+1. **Entity** - A container that groups related components together with a unique ID
+2. **Component** - A reusable, self-contained piece of functionality
+3. **System** - Game-wide mechanisms that process entities with specific components
+
+This architecture allows for flexible game object composition, high code reuse, and
+clear separation of concerns throughout the codebase.
+
+## Component Categories
+
+Components in our system fall into these distinct categories:
+
+### 1. Data Components
+- Example: `TransformComponent`
+- Purpose: Store fundamental data without creating game objects
+- Characteristics:
+  - Hold pure data (position, rotation, scale)
+  - Don't directly interact with Phaser
+  - Serve as a foundation for other components
+  - Often the first components added to entities
+
+### 2. Visual Components
+- Examples: `CircleComponent`, `RectangleComponent` 
+- Purpose: Create and manage visual representations
+- Characteristics:
+  - Create Phaser game objects
+  - Position is based on the CENTER of the visual element
+  - Manage visual properties only (color, alpha, visibility)
+  - Should NOT handle physics or gameplay logic
+  - Tag their game objects with `isVisualOnly` flag
+
+### 3. Physics Components
+- Example: `PhysicsCapability`
+- Purpose: Handle collision detection and physical interactions
+- Characteristics:
+  - Add physics bodies to existing visual game objects
+  - Align physics bodies with visual representations
+  - Manage velocities and forces
+  - Handle collision resolution
+  - Should be the authority for position during movement
+  - Use offset calculations to properly align physics bodies
+
+### 4. Input Components
+- Example: `KeyboardInputComponent`
+- Purpose: Process player input
+- Characteristics:
+  - React to keyboard/mouse events
+  - Translate input to game actions
+  - Request changes through other components
+  - Typically depend on physics components for movement
+
+### 5. Logic Components
+- Example: `ExitComponent`
+- Purpose: Implement specific gameplay behaviors
+- Characteristics:
+  - Define how an entity behaves in specific situations
+  - Contain gameplay rules and logic
+  - Often coordinate between other components
+
+## Component Lifecycle
+
+### 1. Creation and Attachment
+- Entity is created first (`new Entity()`)
+- Components are added via `entity.addComponent(new SomeComponent())`
+- Components should be added in dependency order:
+  - Transform components first
+  - Visual components next, creating game objects
+  - Physics components after visuals, enhancing existing objects
+  - Input and logic components last
+
+### 2. Initialization via `onAttach()`
+- Component dependencies are verified
+- Resources are acquired
+- Game objects are created by visual components
+- Physics bodies are attached to existing game objects
+- Return true if successful, false if dependencies missing
+
+### 3. Runtime via `update(deltaTime)`
+- Components update their state based on time progression
+- Updates are processed in dependency order
+- Physics components become the authority for position during movement
+- Visual components reflect the updated state
+
+### 4. Cleanup via `onDetach()`
+- Resources are released
+- Game objects are destroyed
+- Physics bodies are removed from the physics world
+- Components should clean up in reverse dependency order
+
+## Position Handling
+
+Position handling is critical to prevent visual/physics misalignment:
+
+1. **Transform Component**:
+   - Stores the canonical position (center-based)
+   - Initial source of truth for position
+
+2. **Visual Components**:
+   - Create objects positioned at transform's center
+   - Update position from transform unless told to skip
+
+3. **Physics Components**:
+   - Align physics bodies to match visual centers
+   - Apply appropriate offsets for different shapes
+   - During movement, become the position authority
+   - Update transform directly
+   - Tell visual components to skip their next position update
+
+## Collision System
+
+Collisions are handled through a multi-step process:
+
+1. **Scene Setup**:
+   - `GameScene.setupCollisions()` defines collision relationships
+   - Uses Phaser's physics system to register colliders/overlaps
+   - Only game objects with physics bodies participate
+
+2. **Physics Bodies**:
+   - Defined in `PhysicsCapability.configureCollisionShape()`
+   - Aligned to match visual representations
+   - Different shapes (circle, rectangle) use different configurations
+
+3. **Collision Response**:
+   - Physics engine handles basic collision resolution
+   - Callback functions handle gameplay-specific responses
+   - Entity references are maintained for component access
+
+## Best Practices
+
+### 1. Component Design
+- Keep components focused on a single responsibility
+- Prefer many small components over few large ones
+- Make dependencies explicit via `requireComponent()`
+- Use consistent naming conventions
+
+### 2. Coordination Between Components
+- Use explicit coordination mechanisms 
+- Avoid circular update patterns
+- Document when one component temporarily takes control
+- Use flags like `_skipNextPositionUpdate` to prevent conflicts
+
+### 3. Performance Considerations
+- Minimize game object creation/destruction
+- Only update what needs updating
+- Use physics only when necessary
+- Consider object pooling for frequently created/destroyed entities
+- Use dirty flags to track what needs processing
+
+### 4. Debug Practices
+- Add informative logging at key points
+- Tag game objects with entity references
+- Consider adding debug visualization for physics bodies
+- Document unusual or complex component interactions
+
+## Common Pitfalls to Avoid
+
+1. **Double Handling**:
+   - Having multiple components control the same property
+   - Example: Both physics and input directly setting position
+
+2. **Inconsistent Position References**:
+   - Mixing center-based and corner-based positioning
+   - Using different reference points across components
+
+3. **Circular Updates**:
+   - Component A updates B, which updates C, which updates A
+   - Leads to oscillations, jitter, and unpredictable behavior
+
+4. **Missing Cleanup**:
+   - Not properly removing physics bodies
+   - Not destroying game objects
+   - Memory leaks and phantom collisions
+
+5. **Poor Dependency Order**:
+   - Adding components in incorrect order
+   - Not respecting dependencies during updates
+
+By following these guidelines, the entity-component system will remain robust,
+maintainable, and performant throughout the development process. 
