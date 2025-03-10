@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 import { EntityManager } from '../entities/EntityManager.js';
-import { StageManager } from '../world/Stage.js';
+import { EntityLevelManager } from '../world/EntityLevelManager.js';
 import { ExitManager } from '../world/ExitManager.js';
 import { gameState } from '../core/GameState.js';
 import { findEmptyTile } from '../utils/helpers.js';
 import { actionManager } from '../core/ActionManager.js';
 
 /**
- * Main game scene, updated for component-based entities
+ * Main game scene, updated for entity-based levels
  */
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -17,34 +17,95 @@ export class GameScene extends Phaser.Scene {
     create() {
         // Initialize managers
         this.entityManager = new EntityManager(this);
-        this.stageManager = new StageManager(this);
-        this.stageManager.initialize();
+        this.levelManager = new EntityLevelManager(this);
+        this.levelManager.initialize();
         this.exitManager = new ExitManager(this);
-
-        // Create physics groups for exits and walls
-        this.walls = this.physics.add.staticGroup();
-        this.exits = this.physics.add.staticGroup();
 
         // Track time for fixed updates
         this.lastUpdateTime = Date.now();
         this.fixedTimeStep = 16.67; // ~60 updates per second
         this.accumulator = 0;
 
-        // Generate initial stage
-        const initialStage = this.stageManager.setupStage(gameState.currentStageId);
-        gameState.registerStage(initialStage);
+        // Generate initial level (or use an existing one)
+        const initialLevelId = gameState.currentLevelId || 'level-1';
+        const initialLevel = this.levelManager.setupLevel(initialLevelId);
 
         // Create player at a safe spot
-        const safeSpot = findEmptyTile(initialStage);
-        this.player = this.entityFactory.createFromPrefab('player', {
-            x: safeSpot.x,
-            y: safeSpot.y
-        });
+        this.createPlayerInLevel(initialLevel);
 
         // Set up collisions
         this.setupCollisions();
+        
+        // Enable debug graphics for physics
         this.physics.world.createDebugGraphic();
+    }
 
+    /**
+     * Create a player in a safe location in the given level
+     * @param {object} level - The level to create player in
+     */
+    createPlayerInLevel(level) {
+        // Find a safe spot (floor tile not near exits or walls)
+        const safePosition = this.findSafePlayerPosition(level);
+        
+        // Create the player entity
+        this.player = this.entityFactory.createFromPrefab('player', {
+            x: safePosition.x,
+            y: safePosition.y
+        });
+        
+        console.log(`Player created at position (${safePosition.x}, ${safePosition.y})`);
+    }
+
+    /**
+     * Find a safe position for the player in the level
+     * @param {object} level - The level to find a position in
+     * @returns {object} Safe position {x, y}
+     */
+    findSafePlayerPosition(level) {
+        // Get all empty floor tiles
+        const floorTiles = [];
+        
+        for (let y = 0; y < level.grid.length; y++) {
+            for (let x = 0; x < level.grid[y].length; x++) {
+                if (level.grid[y][x] === 0) { // Floor tile
+                    // Check if it's not too close to exits or edges
+                    let isSafe = true;
+                    
+                    // Check if it's at least 2 tiles away from any exit
+                    for (const exit of level.exits || []) {
+                        const distance = Math.abs(exit.x - x) + Math.abs(exit.y - y);
+                        if (distance < 3) {
+                            isSafe = false;
+                            break;
+                        }
+                    }
+                    
+                    // Check if it's not too close to the edge
+                    if (x < 2 || y < 2 || x >= level.grid[y].length - 2 || y >= level.grid.length - 2) {
+                        isSafe = false;
+                    }
+                    
+                    if (isSafe) {
+                        floorTiles.push({
+                            x: x * 64 + 32, // Convert to world coordinates (centered)
+                            y: y * 64 + 32
+                        });
+                    }
+                }
+            }
+        }
+        
+        // If we have safe tiles, pick a random one
+        if (floorTiles.length > 0) {
+            return floorTiles[Math.floor(Math.random() * floorTiles.length)];
+        }
+        
+        // Fallback: center of the map
+        return {
+            x: level.grid[0].length * 32,
+            y: level.grid.length * 32
+        };
     }
 
     setupCollisions() {
@@ -62,7 +123,7 @@ export class GameScene extends Phaser.Scene {
             // Setup collisions with walls
             this.physics.add.collider(
                 playerVisual.gameObject, 
-                this.stageManager.walls,
+                this.levelManager.collisionGroups.walls,
                 null, // No callback needed for basic wall collisions
                 null,
                 this

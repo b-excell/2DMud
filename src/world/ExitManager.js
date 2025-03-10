@@ -5,161 +5,227 @@ import { CircleComponent } from "../components/CircleComponent.js";
 import { PhysicsCapability } from "../components/PhysicsCapability.js";
 import { KeyboardInputComponent } from "../components/KeyboardInputComponent.js";
 import { TransformComponent } from "../components/TransformComponent.js";
+import { findEmptyTile } from "../utils/helpers.js";
+import { EntityLevelGenerator } from "./EntityLevelGenerator.js";
 
+/**
+ * Manages transitions between levels via exits
+ */
 export class ExitManager {
+    /**
+     * Create a new exit manager
+     * @param {Phaser.Scene} scene - The scene this manager belongs to
+     */
     constructor(scene) {
         this.scene = scene;
         this.canTransition = true;
     }
 
+    /**
+     * Handle player interaction with an exit
+     * @param {Entity} playerEntity - The player entity
+     * @param {number} exitIndex - Index of the exit in the current level
+     */
     handleExit(playerEntity, exitIndex) {
         if (!this.canTransition) return;
 
         this.canTransition = false;
+        console.log(`Player using exit ${exitIndex}`);
 
-        const stage = gameState.stages[gameState.currentStageId];
+        // Get current level
+        const currentLevelId = gameState.currentLevelId;
+        const currentLevel = gameState.levels[currentLevelId];
+
+        if (!currentLevel) {
+            console.error("Current level not found in game state");
+            this.canTransition = true;
+            return;
+        }
 
         // Check if this exit has a connection
-        if (!stage.exitConnections[exitIndex]) {
-            // Generate a new stage
-            const newStageId = 'stage-' + (Object.keys(gameState.stages).length + 1);
-            const newStage = StageGenerator.createStage(newStageId);
+        if (!currentLevel.exitConnections || !currentLevel.exitConnections[exitIndex]) {
+            console.log("Exit has no connection - generating new level");
+            
+            // Generate a new level
+            const newLevelId = `level-${Object.keys(gameState.levels || {}).length + 1}`;
+            const newLevel = this.scene.levelManager.getLevel(newLevelId);
 
-            // Store the stage
-            gameState.registerStage(newStage);
+            // Find available exits in the new level
+            if (newLevel.exits && newLevel.exits.length > 0) {
+                const newExitIndex = Math.floor(Math.random() * newLevel.exits.length);
+                console.log(`Selected exit ${newExitIndex} in new level ${newLevelId}`);
 
-            // Set up the stage in the scene
-            this.scene.stageManager.setupStage(newStageId);
-
-            // Connect to a random exit in the new stage
-            if (newStage.exits.length > 0) {
-                const newExitIndex = Math.floor(Math.random() * newStage.exits.length);
-
-                // Set up bidirectional connections
-                stage.exitConnections[exitIndex] = {
-                    stageId: newStage.id,
-                    exitIndex: newExitIndex
-                };
-
-                newStage.exitConnections[newExitIndex] = {
-                    stageId: stage.id,
-                    exitIndex: exitIndex
-                };
-            }
-        }
-
-        // Get the connected stage
-        const connection = stage.exitConnections[exitIndex];
-
-        if (connection) {
-            // Switch to the connected stage
-            this.scene.stageManager.setupStage(connection.stageId);
-
-            // Place player near the corresponding exit
-            const targetExit = gameState.stages[connection.stageId].exits[connection.exitIndex];
-            const tileX = targetExit.x * TILE_SIZE + TILE_SIZE / 2;
-            const tileY = targetExit.y * TILE_SIZE + TILE_SIZE / 2;
-
-            // Find safe spot near the exit
-            const safeSpots = [];
-
-            for (let dy = -2; dy <= 2; dy++) {
-                for (let dx = -2; dx <= 2; dx++) {
-                    if (dx === 0 && dy === 0) continue; // Skip the exit itself
-
-                    const nx = targetExit.x + dx;
-                    const ny = targetExit.y + dy;
-
-                    // Check bounds and if it's an empty tile
-                    if (nx >= 0 && nx < STAGE_WIDTH && ny >= 0 && ny < STAGE_HEIGHT &&
-                        gameState.stages[connection.stageId].tiles[ny][nx] === 0) {
-                        safeSpots.push({
-                            x: nx * TILE_SIZE + TILE_SIZE / 2,
-                            y: ny * TILE_SIZE + TILE_SIZE / 2
-                        });
-                    }
-                }
-            }
-
-            // Get the player components
-            const transform = playerEntity.getComponent('transform');
-            const physics = playerEntity.getComponent('physics');
-
-            // Define safe position
-            let safeX, safeY;
-
-            if (safeSpots.length > 0) {
-                const safeSpot = safeSpots[Math.floor(Math.random() * safeSpots.length)];
-                safeX = safeSpot.x;
-                safeY = safeSpot.y;
-            } else {
-                // Fallback: Place with offset
-                const offsetX = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
-                const offsetY = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
-                safeX = tileX + offsetX;
-                safeY = tileY + offsetY;
-            }
-
-            // Update the transform position
-            transform.setPosition(safeX, safeY);
-
-            // Check if the player's visual component has a valid gameObject
-            const visualComponent = playerEntity.getComponent('circle');
-            if (!visualComponent || !visualComponent.gameObject) {
-                console.log("Recreating player components after stage transition");
-                
-                // Completely rebuild the player entity
-                // First, remove ALL components to ensure clean state
-                const componentsToRemove = [...playerEntity.components.keys()];
-                
-                // Only keep the transform component's position data
-                const transform = playerEntity.getComponent('transform');
-                const position = transform ? { x: transform.position.x, y: transform.position.y } : { x: safeX, y: safeY };
-                
-                // Remove all components in reverse order to handle dependencies properly
-                for (const componentType of componentsToRemove.reverse()) {
-                    playerEntity.removeComponent(componentType);
-                }
-                
-                // Add components back in the correct order
-                // 1. Transform first (with saved position)
-                const newTransform = new TransformComponent(
-                    position.x, position.y
+                // Set up bidirectional connections between the levels
+                this.scene.levelManager.connectLevels(
+                    currentLevelId, 
+                    exitIndex,
+                    newLevelId,
+                    newExitIndex
                 );
-                playerEntity.addComponent(newTransform);
                 
-                // 2. Circle visual component
-                playerEntity.addComponent(new CircleComponent(
-                    PLAYER_RADIUS,
-                    COLOR_PLAYER
-                ));
+                // Actually switch to the new level
+                this.scene.levelManager.setupLevel(newLevelId);
                 
-                // 3. Physics component
-                playerEntity.addComponent(new PhysicsCapability(
-                    'dynamic',
-                    { drag: 0 }
-                ));
-                
-                // 4. Input component
-                playerEntity.addComponent(new KeyboardInputComponent());
-                
-                // Get the newly created visual component for camera following
-                const newVisualComponent = playerEntity.getComponent('circle');
-                if (newVisualComponent && newVisualComponent.gameObject) {
-                    this.scene.cameras.main.startFollow(newVisualComponent.gameObject);
-                }
-            } else if (visualComponent.gameObject && visualComponent.gameObject.body) {
-                // If visual and physics are still intact, just reset the position
-                visualComponent.gameObject.body.reset(safeX, safeY);
+                // Position player at the appropriate exit in the new level
+                this.positionPlayerAtExit(playerEntity, newLevel, newExitIndex);
+            } else {
+                console.error("New level has no exits - cannot connect levels");
+                this.canTransition = true;
+                return;
+            }
+        } else {
+            // Get the connected level
+            const connection = currentLevel.exitConnections[exitIndex];
+            console.log(`Using existing connection to level ${connection.levelId}, exit ${connection.exitIndex}`);
+
+            const targetLevelId = connection.levelId;
+            const targetLevel = gameState.levels[targetLevelId];
+            
+            if (!targetLevel) {
+                console.error(`Target level ${targetLevelId} not found in game state`);
+                this.canTransition = true;
+                return;
+            }
+            
+            // Verify the connection exit exists in the target level
+            const targetExit = targetLevel.exits.find(e => e.exitIndex === connection.exitIndex);
+            if (!targetExit) {
+                console.error(`Exit ${connection.exitIndex} not found in target level ${targetLevelId}`);
+                this.canTransition = true;
+                return;
             }
 
-            // Update collisions after stage change
-            this.scene.setupCollisions();
+            // Switch to the connected level
+            this.scene.levelManager.setupLevel(targetLevelId);
+            
+            // Position player at the correct exit
+            this.positionPlayerAtExit(playerEntity, targetLevel, connection.exitIndex);
         }
+
+        // Update collisions after level change
+        this.scene.setupCollisions();
 
         // Allow transitions again after a short delay
         setTimeout(() => {
             this.canTransition = true;
         }, 500);
+    }
+    
+    /**
+     * Position the player at the corresponding exit in the target level
+     * @param {Entity} playerEntity - The player entity
+     * @param {object} targetLevel - The target level data
+     * @param {number} exitIndex - Index of the exit in the target level
+     */
+    positionPlayerAtExit(playerEntity, targetLevel, exitIndex) {
+        // Find the target exit
+        const targetExit = targetLevel.exits.find(e => e.exitIndex === exitIndex);
+        
+        if (!targetExit) {
+            console.error(`Exit ${exitIndex} not found in target level`);
+            return;
+        }
+        
+        // Find a safe spot near the exit
+        const safeSpot = this.findSafeSpotNearExit(targetLevel, targetExit);
+        const safeX = safeSpot.x;
+        const safeY = safeSpot.y;
+
+        // Update the player transform position
+        const transform = playerEntity.getComponent('transform');
+        if (transform) {
+            transform.setPosition(safeX, safeY);
+        }
+
+        // Check if the player's visual component has a valid gameObject
+        const visualComponent = playerEntity.getComponent('circle');
+        if (!visualComponent || !visualComponent.gameObject) {
+            console.log("Recreating player components after level transition");
+            
+            // Completely rebuild the player entity
+            // First, remove ALL components to ensure clean state
+            const componentsToRemove = [...playerEntity.components.keys()];
+            
+            // Only keep the transform component's position data
+            const position = transform ? { x: transform.position.x, y: transform.position.y } : { x: safeX, y: safeY };
+            
+            // Remove all components in reverse order to handle dependencies properly
+            for (const componentType of componentsToRemove.reverse()) {
+                playerEntity.removeComponent(componentType);
+            }
+            
+            // Add components back in the correct order
+            // 1. Transform first (with saved position)
+            const newTransform = new TransformComponent(
+                position.x, position.y
+            );
+            playerEntity.addComponent(newTransform);
+            
+            // 2. Circle visual component
+            playerEntity.addComponent(new CircleComponent(
+                PLAYER_RADIUS,
+                COLOR_PLAYER
+            ));
+            
+            // 3. Physics component
+            playerEntity.addComponent(new PhysicsCapability(
+                'dynamic',
+                { drag: 0 }
+            ));
+            
+            // 4. Input component
+            playerEntity.addComponent(new KeyboardInputComponent());
+            
+            // Get the newly created visual component for camera following
+            const newVisualComponent = playerEntity.getComponent('circle');
+            if (newVisualComponent && newVisualComponent.gameObject) {
+                this.scene.cameras.main.startFollow(newVisualComponent.gameObject);
+            }
+        } else if (visualComponent.gameObject && visualComponent.gameObject.body) {
+            // If visual and physics are still intact, just reset the position
+            visualComponent.gameObject.body.reset(safeX, safeY);
+        }
+    }
+
+    /**
+     * Find a safe spot near an exit
+     * @param {object} level - The level data
+     * @param {object} exit - The exit data
+     * @returns {object} Safe position {x, y}
+     */
+    findSafeSpotNearExit(level, exit) {
+        const safeSpots = [];
+
+        // Check tiles in a radius around the exit
+        for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+                if (dx === 0 && dy === 0) continue; // Skip the exit itself
+
+                const nx = exit.x + dx;
+                const ny = exit.y + dy;
+
+                // Check bounds and if it's a floor tile
+                if (nx >= 0 && nx < STAGE_WIDTH && ny >= 0 && ny < STAGE_HEIGHT &&
+                    level.grid[ny][nx] === 0) {
+                    safeSpots.push({
+                        x: nx * TILE_SIZE + TILE_SIZE / 2,
+                        y: ny * TILE_SIZE + TILE_SIZE / 2
+                    });
+                }
+            }
+        }
+
+        // Return a random safe spot or fallback to offset position
+        if (safeSpots.length > 0) {
+            return safeSpots[Math.floor(Math.random() * safeSpots.length)];
+        } else {
+            // Fallback: offset from exit position
+            const offsetX = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
+            const offsetY = (Math.random() > 0.5 ? 1 : -1) * TILE_SIZE;
+            return {
+                x: exit.x * TILE_SIZE + TILE_SIZE / 2 + offsetX,
+                y: exit.y * TILE_SIZE + TILE_SIZE / 2 + offsetY
+            };
+        }
     }
 }

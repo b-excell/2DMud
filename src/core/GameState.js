@@ -9,6 +9,12 @@ class GameState {
     constructor() {
         this.entities = {}; // All game entities by ID
         this.players = {}; // Player entities specifically
+        
+        // New entity-based level system
+        this.currentLevelId = 'level-1';
+        this.levels = {}; // All levels by ID
+        
+        // Legacy stage system - maintained for backward compatibility
         this.currentStageId = 'stage-1';
         this.stages = {}; // All stages by ID
 
@@ -18,6 +24,7 @@ class GameState {
 
         // Listen for events to update state
         eventBus.on('stage:transition', this.handleStageTransition.bind(this));
+        eventBus.on('level:transition', this.handleLevelTransition.bind(this));
         eventBus.on('entity:created', this.registerEntity.bind(this));
         eventBus.on('entity:destroyed', this.unregisterEntity.bind(this));
     }
@@ -28,7 +35,8 @@ class GameState {
      */
     getState() {
         return {
-            currentStageId: this.currentStageId,
+            currentLevelId: this.currentLevelId,
+            currentStageId: this.currentStageId, // Legacy support
             entities: this.entities,
             stateSequence: this.stateSequence,
             timestamp: Date.now()
@@ -72,7 +80,20 @@ class GameState {
     }
 
     /**
-     * Handle stage transition events
+     * Handle level transition events
+     * @param {object} data - Transition data
+     */
+    handleLevelTransition(data) {
+        const { levelId } = data;
+        this.currentLevelId = levelId;
+        this.stateSequence++;
+
+        // This would be a critical network event in multiplayer
+        console.log(`Game state updated: transitioned to level ${levelId}`);
+    }
+
+    /**
+     * Handle stage transition events (legacy support)
      * @param {object} data - Transition data
      */
     handleStageTransition(data) {
@@ -84,7 +105,16 @@ class GameState {
     }
 
     /**
-     * Register a stage in the game state
+     * Register a level in the game state
+     * @param {object} level - The level to register
+     */
+    registerLevel(level) {
+        this.levels[level.id] = level;
+        console.log(`Level ${level.id} registered in game state`);
+    }
+
+    /**
+     * Register a stage in the game state (legacy support)
      * @param {object} stage - The stage to register
      */
     registerStage(stage) {

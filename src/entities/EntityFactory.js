@@ -1,6 +1,7 @@
 import { Entity } from './Entity.js';
 import { createExit } from './prefabs/exit.js';
 import { createPlayer } from './prefabs/player.js';
+import { createWallStone, createFloorDirt, createFloorGrass } from './prefabs/environment/index.js';
 
 /**
  * Factory for creating game entities
@@ -18,9 +19,16 @@ export class EntityFactory {
      * Register default prefabs
      */
     registerDefaultPrefabs() {
-        // Register each prefab manually with the correct name
-        this.registerPrefab('exit', createExit);
+        // Character prefabs
         this.registerPrefab('player', createPlayer);
+        
+        // Interactive object prefabs
+        this.registerPrefab('exit', createExit);
+        
+        // Environment prefabs
+        this.registerPrefab('wall_stone', createWallStone);
+        this.registerPrefab('floor_dirt', createFloorDirt);
+        this.registerPrefab('floor_grass', createFloorGrass);
 
         // Log prefabs for debugging
         console.log("Registered prefabs:", Object.keys(this.prefabs));
