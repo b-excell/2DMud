@@ -2,6 +2,7 @@ import { TransformComponent } from "../../components/TransformComponent.js"
 import { CircleComponent } from '../../components/CircleComponent.js';
 import { PhysicsCapability } from '../../components/PhysicsCapability.js';
 import { KeyboardInputComponent } from '../../components/KeyboardInputComponent.js';
+import { PlayerStateMachine } from '../../components/PlayerStateMachine.js';
 import { PLAYER_RADIUS, COLOR_PLAYER } from '../../config.js';
 
 /**
@@ -36,6 +37,9 @@ export function createPlayer(scene, config = {}) {
 
     // 4. Add input handling
     player.addComponent(new KeyboardInputComponent());
+    
+    // 5. Add the state machine to control movement and attacks
+    player.addComponent(new PlayerStateMachine());
 
     // Set up camera following
     const objectComponent = player.getComponent('circle');

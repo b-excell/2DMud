@@ -15,3 +15,6 @@ export { PhysicsCapability } from './PhysicsCapability.js'; // New
 // Input Components
 export { InputComponent } from './InputComponent.js';
 export { KeyboardInputComponent } from './KeyboardInputComponent.js';
+
+// Player-specific Components
+export { PlayerStateMachine } from './PlayerStateMachine.js';
